@@ -13,7 +13,7 @@ const CINETPAY_API_URL = "https://api-checkout.cinetpay.com/v2/payment";
 const CINETPAY_CHECK_URL = "https://api-checkout.cinetpay.com/v2/payment/check";
 
 export const initiateCinetPayPayment = functions.https.onCall(async (data, context) => {
-    const { eventId, amount, currency, type, returnUrl } = data;
+    const { eventId, amount, currency, type, returnUrl, participantId, voteCount } = data;
     
     // 1. Validation
     if (!eventId || !amount || !currency || !["ticket", "vote"].includes(type)) {
@@ -29,7 +29,7 @@ export const initiateCinetPayPayment = functions.https.onCall(async (data, conte
 
     // 2. Création de la transaction 'pending'
     const transactionRef = db.collection("transactions").doc();
-    const transactionData = {
+    const transactionData: any = {
         event_id: eventId,
         amount: amount,
         currency: currency,
@@ -38,6 +38,10 @@ export const initiateCinetPayPayment = functions.https.onCall(async (data, conte
         created_at: admin.firestore.FieldValue.serverTimestamp(),
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
     };
+    if (type === "vote") {
+        transactionData.participant_id = participantId;
+        transactionData.vote_count = voteCount || 1;
+    }
     
     await transactionRef.set(transactionData);
 
@@ -130,9 +134,26 @@ export const paymentCallback = functions.https.onRequest(async (req, res) => {
                         ticket_stock: admin.firestore.FieldValue.increment(-1)
                     });
                 } else if (txData.type === "vote") {
-                    t.update(eventRef, {
-                        total_votes: admin.firestore.FieldValue.increment(1)
-                    });
+                    const eventData = eventDoc.data();
+                    const voteCountToAdd = txData.vote_count || 1;
+                    
+                    if (eventData && eventData.participants) {
+                        const updatedParticipants = eventData.participants.map((p: any) => {
+                            if (p.id === txData.participant_id) {
+                                return { ...p, voteCount: (p.voteCount || 0) + voteCountToAdd };
+                            }
+                            return p;
+                        });
+                        
+                        t.update(eventRef, {
+                            participants: updatedParticipants,
+                            total_votes: admin.firestore.FieldValue.increment(voteCountToAdd)
+                        });
+                    } else {
+                        t.update(eventRef, {
+                            total_votes: admin.firestore.FieldValue.increment(voteCountToAdd)
+                        });
+                    }
                 }
                 t.update(transactionRef, updates);
             });

@@ -16,6 +16,14 @@ export interface TicketType {
   saleEnd?: string;
 }
 
+export interface Participant {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  voteCount: number;
+}
+
 export interface Event {
   id: string;
   slug: string;
@@ -31,6 +39,8 @@ export interface Event {
   feeMode: FeeMode;
   currency: Currency;
   ticketTypes: TicketType[];
+  participants?: Participant[];
+  votePrice?: number;
   createdAt: string;
   updatedAt: string;
 }

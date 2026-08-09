@@ -3,7 +3,10 @@ import { ArrowLeft, Calendar, MapPin, Users } from 'lucide-react';
 import TicketSelector from '../components/ticketing/TicketSelector';
 import { fetchEvent } from '../src/services/ticketingService';
 import { calculateOrderFees, formatPrice, getTicketCurrency } from '../src/lib/fees';
-import type { CartItem, Event } from '../src/types/ticketing';
+import type { CartItem, Event, Participant } from '../src/types/ticketing';
+import VoteModal from '../src/components/ticketing/VoteModal';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../src/firebase';
 
 interface EventDetailPageProps {
   eventSlug: string;
@@ -15,12 +18,44 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartError, setCartError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [voteSuccess, setVoteSuccess] = useState('');
+  const [verifyingVote, setVerifyingVote] = useState(false);
 
   useEffect(() => {
     fetchEvent(eventSlug).then((data) => {
       setEvent(data);
       setLoading(false);
     });
+
+    const pendingVoteTxn = sessionStorage.getItem('pending_cinetpay_vote_txn');
+    if (pendingVoteTxn) {
+      setVerifyingVote(true);
+      const unsubscribe = onSnapshot(doc(db, "transactions", pendingVoteTxn), (docSnap) => {
+          if (docSnap.exists()) {
+              const tx = docSnap.data();
+              if (tx.status === "success") {
+                  unsubscribe();
+                  setVoteSuccess('Votre vote a été comptabilisé avec succès ! Merci de votre soutien.');
+                  sessionStorage.removeItem('pending_cinetpay_vote_txn');
+                  sessionStorage.removeItem('pending_vote_participant');
+                  setVerifyingVote(false);
+                  
+                  // Refresh event to get new vote count
+                  fetchEvent(eventSlug).then(setEvent);
+                  
+                  // Hide success message after 5 seconds
+                  setTimeout(() => setVoteSuccess(''), 5000);
+              } else if (tx.status === "failed") {
+                  unsubscribe();
+                  sessionStorage.removeItem('pending_cinetpay_vote_txn');
+                  sessionStorage.removeItem('pending_vote_participant');
+                  setVerifyingVote(false);
+              }
+          }
+      });
+      return () => unsubscribe();
+    }
   }, [eventSlug]);
 
   if (loading) {
@@ -126,6 +161,48 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
                 </div>
               </div>
             </div>
+
+            {voteSuccess && (
+              <div className="mb-8 p-4 bg-green-50 border border-green-200 text-green-700 font-medium rounded-lg">
+                {voteSuccess}
+              </div>
+            )}
+            
+            {verifyingVote && (
+              <div className="mb-8 p-4 bg-blue-50 border border-blue-200 text-blue-700 font-medium rounded-lg animate-pulse">
+                Vérification du paiement de votre vote en cours...
+              </div>
+            )}
+
+            {event.participants && event.participants.length > 0 && (
+              <div className="mb-12">
+                <h2 className="font-serif text-2xl text-navy mb-6">Soutenez vos candidats favoris</h2>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {event.participants.map((participant) => (
+                    <div key={participant.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 text-center hover:shadow-md transition-shadow">
+                      {participant.imageUrl ? (
+                        <img src={participant.imageUrl} alt={participant.name} className="w-24 h-24 mx-auto rounded-full object-cover mb-4 border-4 border-gold/20" />
+                      ) : (
+                        <div className="w-24 h-24 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-4 text-2xl font-bold text-slate-400">
+                          {participant.name.charAt(0)}
+                        </div>
+                      )}
+                      <h3 className="text-lg font-bold text-navy mb-1">{participant.name}</h3>
+                      {participant.description && <p className="text-sm text-slate-500 mb-3">{participant.description}</p>}
+                      <div className="inline-block bg-slate-50 px-3 py-1 rounded-full text-sm font-medium text-slate-600 mb-4">
+                        {participant.voteCount} vote{participant.voteCount !== 1 ? 's' : ''}
+                      </div>
+                      <button
+                        onClick={() => setSelectedParticipant(participant)}
+                        className="w-full py-2 bg-navy text-white text-sm font-bold uppercase tracking-wider rounded-lg hover:bg-navy/90 transition-colors"
+                      >
+                        Voter ({formatPrice(event.votePrice || 1, event.currency || 'USD')})
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-2">
@@ -167,6 +244,15 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
           </div>
         </div>
       </div>
+      
+      {selectedParticipant && (
+        <VoteModal 
+          event={event} 
+          participant={selectedParticipant} 
+          onClose={() => setSelectedParticipant(null)} 
+          onSuccess={() => setSelectedParticipant(null)}
+        />
+      )}
     </div>
   );
 };

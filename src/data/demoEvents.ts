@@ -29,6 +29,30 @@ export const DEMO_EVENTS: Event[] = [
       { id: 'tt-gala-amours-presta-gold', name: 'Prestation Gold', description: 'Candidature mannequin/styliste — passage scène 10 min', price: 70, quantity: 20, sold: 6 },
       { id: 'tt-gala-amours-presta-premium', name: 'Prestation Premium', description: 'Passage scène 15 min + mise en avant spéciale', price: 100, quantity: 15, sold: 4 },
     ],
+    votePrice: 1, // Prix en USD par défaut pour ce gala
+    participants: [
+      {
+        id: 'candidat-1',
+        name: 'Sarah K.',
+        description: 'Catégorie Mannequin',
+        imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+        voteCount: 125,
+      },
+      {
+        id: 'candidat-2',
+        name: 'Marc T.',
+        description: 'Catégorie Styliste',
+        imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+        voteCount: 89,
+      },
+      {
+        id: 'candidat-3',
+        name: 'Elise B.',
+        description: 'Catégorie Modèle',
+        imageUrl: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80',
+        voteCount: 42,
+      },
+    ],
     createdAt: inDays(-3),
     updatedAt: inDays(0),
   },

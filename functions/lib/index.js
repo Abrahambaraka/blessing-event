@@ -14,7 +14,7 @@ const CINETPAY_API_URL = "https://api-checkout.cinetpay.com/v2/payment";
 const CINETPAY_CHECK_URL = "https://api-checkout.cinetpay.com/v2/payment/check";
 exports.initiateCinetPayPayment = functions.https.onCall(async (data, context) => {
     var _a;
-    const { eventId, amount, currency, type, returnUrl } = data;
+    const { eventId, amount, currency, type, returnUrl, participantId, voteCount } = data;
     // 1. Validation
     if (!eventId || !amount || !currency || !["ticket", "vote"].includes(type)) {
         throw new functions.https.HttpsError("invalid-argument", "Données invalides.");
@@ -36,6 +36,10 @@ exports.initiateCinetPayPayment = functions.https.onCall(async (data, context) =
         created_at: admin.firestore.FieldValue.serverTimestamp(),
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
     };
+    if (type === "vote") {
+        transactionData.participant_id = participantId;
+        transactionData.vote_count = voteCount || 1;
+    }
     await transactionRef.set(transactionData);
     // 3. Appel à l'API CinetPay
     try {
@@ -116,9 +120,25 @@ exports.paymentCallback = functions.https.onRequest(async (req, res) => {
                     });
                 }
                 else if (txData.type === "vote") {
-                    t.update(eventRef, {
-                        total_votes: admin.firestore.FieldValue.increment(1)
-                    });
+                    const eventData = eventDoc.data();
+                    const voteCountToAdd = txData.vote_count || 1;
+                    if (eventData && eventData.participants) {
+                        const updatedParticipants = eventData.participants.map((p) => {
+                            if (p.id === txData.participant_id) {
+                                return Object.assign(Object.assign({}, p), { voteCount: (p.voteCount || 0) + voteCountToAdd });
+                            }
+                            return p;
+                        });
+                        t.update(eventRef, {
+                            participants: updatedParticipants,
+                            total_votes: admin.firestore.FieldValue.increment(voteCountToAdd)
+                        });
+                    }
+                    else {
+                        t.update(eventRef, {
+                            total_votes: admin.firestore.FieldValue.increment(voteCountToAdd)
+                        });
+                    }
                 }
                 t.update(transactionRef, updates);
             });
