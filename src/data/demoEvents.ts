@@ -9,6 +9,50 @@ const inDays = (n: number) => {
 
 export const DEMO_EVENTS: Event[] = [
   {
+    id: 'evt-miss-rdc-2026',
+    slug: 'election-miss-rdc-demo',
+    title: 'Élection Miss RDC 2026 (Démo Vote)',
+    description:
+      'Événement de démonstration dédié au test du système de vote payant CinetPay. Soutenez votre candidate préférée en achetant des votes !',
+    date: inDays(30),
+    venue: 'Pullman Hôtel',
+    city: 'Kinshasa',
+    imageUrl: 'https://images.unsplash.com/photo-1566915222097-400d36746401?w=800&q=80',
+    status: 'published',
+    capacity: 1000,
+    feeMode: 'buyer',
+    currency: 'USD',
+    ticketTypes: [
+      { id: 'tt-miss-standard', name: 'Entrée Standard', description: 'Accès à la soirée', price: 50, quantity: 800, sold: 120 },
+    ],
+    votePrice: 1, // 1 USD par vote
+    participants: [
+      {
+        id: 'candidat-kasa',
+        name: 'Marie L.',
+        description: 'Candidate N°1 - Kasaï',
+        imageUrl: 'https://images.unsplash.com/photo-1531123897727-8f129e1bf98c?w=400&q=80',
+        voteCount: 345,
+      },
+      {
+        id: 'candidat-kin',
+        name: 'Sophie N.',
+        description: 'Candidate N°2 - Kinshasa',
+        imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+        voteCount: 512,
+      },
+      {
+        id: 'candidat-kivu',
+        name: 'Aimée M.',
+        description: 'Candidate N°3 - Sud-Kivu',
+        imageUrl: 'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=400&q=80',
+        voteCount: 489,
+      },
+    ],
+    createdAt: inDays(-2),
+    updatedAt: inDays(0),
+  },
+  {
     id: 'evt-gala-des-amours-2026',
     slug: 'gala-des-amours',
     title: 'Gala des Amours',
