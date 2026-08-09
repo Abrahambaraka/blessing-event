@@ -108,7 +108,7 @@ export function saveOrder(order: Order): void {
 }
 
 export function getOrderById(id: string): Order | undefined {
-  return getOrders().find((o) => o.id === order.id);
+  return getOrders().find((o) => o.id === id);
 }
 
 export function getTickets(): Ticket[] {
