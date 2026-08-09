@@ -1,0 +1,36 @@
+:root {
+  --transition-ease-premium: cubic-bezier(0.25, 1, 0.5, 1);
+  --transition-duration-reveal: 1.2s;
+  --color-navy: #0B213F;
+  --color-gold: #C5A059;
+}
+
+/* --- SCROLL REVEAL --- */
+.reveal-fade-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity var(--transition-duration-reveal) var(--transition-ease-premium),
+              transform var(--transition-duration-reveal) var(--transition-ease-premium);
+  transition-delay: var(--delay, 0ms);
+  will-change: transform, opacity;
+}
+
+/* Classe injectée par l'Intersection Observer */
+.reveal-fade-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- HOVER ZOOM PREMIUM --- */
+.hover-zoom-container {
+  overflow: hidden; /* Important : l'image ne doit pas déborder */
+}
+
+.hover-zoom-img {
+  transition: transform 1.4s var(--transition-ease-premium);
+  will-change: transform;
+}
+
+.hover-zoom-container:hover .hover-zoom-img {
+  transform: scale(1.06);
+}

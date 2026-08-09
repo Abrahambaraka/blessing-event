@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Démonstration d'Animations Premium - Blessing Event</title>
+  
+  <!-- Polices Premium Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN pour la structure rapide (comme votre site principal) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    // Configuration des couleurs de la marque dans Tailwind
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#0B213F',
+            gold: '#C5A059',
+            'gold-hover': '#b48e48',
+          },
+          fontFamily: {
+            sans: ['Montserrat', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- CSS Customisé avec Variables & Animations fluides -->
+  <style>
+    :root {
+      /* Variables d'animation de luxe */
+      --transition-ease-premium: cubic-bezier(0.25, 1, 0.5, 1);
+      --transition-duration-reveal: 1.2s;
+      --transition-duration-hover: 1.6s;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    /* ==========================================================================
+       1. Effet de Zoom Doux sur Image (Hover Zoom)
+       ========================================================================== */
+    .hover-zoom-container {
+      overflow: hidden !important;
+      position: relative;
+    }
+
+    .hover-zoom-img {
+      transition: transform var(--transition-duration-hover) var(--transition-ease-premium) !important;
+      will-change: transform;
+    }
+
+    /* Zoom progressif au survol */
+    .hover-zoom-container:hover .hover-zoom-img {
+      transform: scale(1.05);
+    }
+
+    /* ==========================================================================
+       2. Scroll Reveal (Animations d'apparition au défilement)
+       ========================================================================== */
+    
+    /* Éléments qui glissent du bas vers le haut */
+    .reveal-fade-up {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity var(--transition-duration-reveal) var(--transition-ease-premium),
+                  transform var(--transition-duration-reveal) var(--transition-ease-premium);
+      will-change: opacity, transform;
+    }
+
+    /* Éléments qui apparaissent en fondu simple */
+    .reveal-fade-in {
+      opacity: 0;
+      transition: opacity var(--transition-duration-reveal) var(--transition-ease-premium);
+      will-change: opacity;
+    }
+
+    /* Classe active ajoutée par le JavaScript (Intersection Observer) */
+    .reveal-fade-up.is-visible,
+    .reveal-fade-in.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Gestion de l'effet cascade (stagger) via les variables CSS --delay */
+    .reveal-fade-up.is-visible,
+    .reveal-fade-in.is-visible {
+      transition-delay: var(--delay, 0s);
+    }
+
+    /* Lissage du défilement global */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* ==========================================================================
+       3. Accessibilité (Mouvements réduits)
+       ========================================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-fade-up {
+        transform: none;
+        transition-duration: 0.3s;
+      }
+      .hover-zoom-img {
+        transition: none !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+
+  <!-- En-tête / Navigation -->
+  <nav class="fixed top-0 left-0 w-full z-50 bg-navy/90 backdrop-blur-md border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center text-white">
+    <div class="font-serif font-bold text-lg md:text-xl tracking-widest text-gold">BLESSING EVENT</div>
+    <div class="hidden md:flex space-x-8 text-xs font-semibold uppercase tracking-widest">
+      <a href="#accueil" class="hover:text-gold transition-colors duration-300">Accueil</a>
+      <a href="#a-propos" class="hover:text-gold transition-colors duration-300">À Propos</a>
+      <a href="#services" class="hover:text-gold transition-colors duration-300">Services</a>
+      <a href="#galerie" class="hover:text-gold transition-colors duration-300">Galerie</a>
+      <a href="#contact" class="hover:text-gold transition-colors duration-300">Contact</a>
+    </div>
+    <a href="#contact" class="px-5 py-2 bg-gold text-navy font-bold text-2xs uppercase tracking-widest hover:bg-white hover:text-navy transition-all duration-300">
+      Réserver
+    </a>
+  </nav>
+
+  <!-- Section Hero -->
+  <header id="accueil" class="relative h-screen min-h-[600px] flex items-center justify-center bg-navy text-white">
+    <div class="absolute inset-0 z-0 hover-zoom-container">
+      <img 
+        src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=2000" 
+        alt="Mariage de luxe" 
+        class="w-full h-full object-cover opacity-30 hover-zoom-img"
+      >
+      <div class="absolute inset-0 bg-gradient-to-b from-navy/30 via-transparent to-navy/80"></div>
+    </div>
+    
+    <div class="relative z-10 container mx-auto px-6 text-center">
+      <!-- Les éléments ci-dessous apparaîtront en cascade au chargement -->
+      <span class="reveal-fade-up inline-block text-gold text-xs md:text-sm font-semibold tracking-[0.25em] uppercase mb-4" style="--delay: 0.1s">
+        L'EXCELLENCE DU PROTOCOLE
+      </span>
+      <h1 class="reveal-fade-up text-4xl sm:text-5xl md:text-7xl font-bold font-serif mb-6 leading-tight max-w-4xl mx-auto" style="--delay: 0.3s">
+        Créateurs d'Événements d'Exception
+      </h1>
+      <p class="reveal-fade-up text-slate-300 text-sm sm:text-base md:text-lg max-w-xl mx-auto mb-10 font-light" style="--delay: 0.5s">
+        Orchestration de mariages prestigieux, galas d'affaires et réceptions privées en République Démocratique du Congo.
+      </p>
+      <div class="reveal-fade-up flex flex-col sm:flex-row gap-4 justify-center" style="--delay: 0.7s">
+        <a href="#services" class="px-8 py-3 bg-gold text-white font-bold text-xs uppercase tracking-widest hover:bg-white hover:text-navy transition-all duration-300 shadow-lg">
+          Découvrir Nos Services
+        </a>
+        <a href="#contact" class="px-8 py-3 border border-white/30 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all duration-300">
+          Nous Contacter
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Section À Propos -->
+  <section id="a-propos" class="py-24 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <!-- Image avec conteneur zoom -->
+        <div class="reveal-fade-up relative hover-zoom-container shadow-2xl border-8 border-slate-50" style="--delay: 0.2s">
+          <img 
+            src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=800" 
+            alt="Détails de table de mariage" 
+            class="w-full h-96 md:h-[500px] object-cover hover-zoom-img"
+          >
+          <div class="absolute -bottom-6 -right-6 bg-navy p-6 md:p-8 text-white z-10 shadow-lg">
+            <span class="block text-2xl md:text-3xl font-serif font-bold text-gold">5 Ans</span>
+            <span class="block text-[10px] uppercase tracking-widest text-slate-400">D'Expertise de Prestige</span>
+          </div>
+        </div>
+
+        <!-- Contenu texte à révéler -->
+        <div class="space-y-6">
+          <div class="reveal-fade-up" style="--delay: 0.1s">
+            <span class="text-gold text-xs font-semibold tracking-widest uppercase block mb-2">NOTRE PHILOSOPHIE</span>
+            <h2 class="text-3xl md:text-5xl font-bold font-serif text-navy leading-tight">
+              L'art de recevoir poussé à la perfection
+            </h2>
+            <div class="w-20 h-1 bg-gold mt-4"></div>
+          </div>
+
+          <p class="reveal-fade-up text-slate-600 text-base md:text-lg leading-relaxed italic" style="--delay: 0.3s">
+            "Chaque détail compte, chaque seconde doit être un enchantement pour vos invités."
+          </p>
+
+          <p class="reveal-fade-up text-slate-600 text-sm md:text-base leading-relaxed" style="--delay: 0.4s">
+            Blessing Event allie la rigueur du protocole d'État à l'esthétique raffinée de la haute scénographie. De Lubumbashi à Kinshasa, nous concevons des moments sur mesure qui marquent les esprits à jamais.
+          </p>
+
+          <div class="reveal-fade-up pt-4" style="--delay: 0.5s">
+            <a href="#services" class="inline-flex items-center text-navy font-bold text-xs uppercase tracking-widest hover:text-gold transition-colors duration-300">
+              Notre Méthodologie <span class="ml-2 font-serif text-lg">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section Services (Galerie & Cartes de Services) -->
+  <section id="services" class="py-24 bg-slate-50">
+    <div class="container mx-auto px-6">
+      
+      <!-- En-tête de section -->
+      <div class="text-center mb-16 max-w-2xl mx-auto">
+        <span class="reveal-fade-up text-gold text-xs font-semibold tracking-widest uppercase block mb-3" style="--delay: 0.1s">
+          VOTRE PROJET SUR MESURE
+        </span>
+        <h2 class="reveal-fade-up text-3xl md:text-5xl font-bold font-serif text-navy" style="--delay: 0.2s">
+          Nos Services d'Exception
+        </h2>
+        <div class="w-20 h-1 bg-gold mx-auto mt-4 reveal-fade-up" style="--delay: 0.3s"></div>
+      </div>
+
+      <!-- Grille de cartes (Effet cascade dynamique) -->
+      <div class="grid md:grid-cols-3 gap-8">
+        
+        <!-- Service 1 -->
+        <div class="reveal-fade-up bg-white shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden group" style="--delay: 0.1s">
+          <div class="hover-zoom-container h-64">
+            <img 
+              src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800" 
+              alt="Accueil Protocolaire" 
+              class="w-full h-full object-cover hover-zoom-img"
+            >
+            <div class="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-500"></div>
+          </div>
+          <div class="p-8">
+            <span class="text-gold text-[10px] font-bold uppercase tracking-widest block mb-2">PÔLE PRESTIGE</span>
+            <h3 class="text-xl font-bold font-serif text-navy mb-3">Accueil & Haute Étiquette</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-6">
+              Hôtesses formées au protocole VIP, placement stratégique et accueil multilingue pour vos invités de marque.
+            </p>
+            <a href="#" class="text-gold font-bold text-xs uppercase tracking-widest hover:text-navy transition-colors duration-300">
+              Découvrir <span class="ml-1">→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Service 2 -->
+        <div class="reveal-fade-up bg-white shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden group" style="--delay: 0.25s">
+          <div class="hover-zoom-container h-64">
+            <img 
+              src="https://images.unsplash.com/photo-1478147427282-58a87a120781?auto=format&fit=crop&q=80&w=800" 
+              alt="Scénographie florale" 
+              class="w-full h-full object-cover hover-zoom-img"
+            >
+            <div class="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-500"></div>
+          </div>
+          <div class="p-8">
+            <span class="text-gold text-[10px] font-bold uppercase tracking-widest block mb-2">DESIGN D'ESPACE</span>
+            <h3 class="text-xl font-bold font-serif text-navy mb-3">Scénographie & Décors</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-6">
+              Création d'univers féeriques sur-mesure, décoration florale haut de gamme et jeux de lumière majestueux.
+            </p>
+            <a href="#" class="text-gold font-bold text-xs uppercase tracking-widest hover:text-navy transition-colors duration-300">
+              Découvrir <span class="ml-1">→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Service 3 -->
+        <div class="reveal-fade-up bg-white shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden group" style="--delay: 0.4s">
+          <div class="hover-zoom-container h-64">
+            <img 
+              src="https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&q=80&w=800" 
+              alt="Haute gastronomie" 
+              class="w-full h-full object-cover hover-zoom-img"
+            >
+            <div class="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-500"></div>
+          </div>
+          <div class="p-8">
+            <span class="text-gold text-[10px] font-bold uppercase tracking-widest block mb-2">TRAITEUR VIP</span>
+            <h3 class="text-xl font-bold font-serif text-navy mb-3">Art Gastronomique</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-6">
+              Menus gastronomiques raffinés servis à la cloche, buffets prestigieux et sommellerie de classe mondiale.
+            </p>
+            <a href="#" class="text-gold font-bold text-xs uppercase tracking-widest hover:text-navy transition-colors duration-300">
+              Découvrir <span class="ml-1">→</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section Galerie / Réalisations (Zoom d'images premium) -->
+  <section id="galerie" class="py-24 bg-white">
+    <div class="container mx-auto px-6">
+      
+      <div class="text-center mb-16">
+        <span class="reveal-fade-up text-gold text-xs font-semibold tracking-widest uppercase block mb-3">
+          GALERIE D'EXCELLENCE
+        </span>
+        <h2 class="reveal-fade-up text-3xl md:text-5xl font-bold font-serif text-navy">
+          Nos Plus Beaux Moments
+        </h2>
+        <div class="w-20 h-1 bg-gold mx-auto mt-4 reveal-fade-up"></div>
+      </div>
+
+      <!-- Galerie Grid asymétrique -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Image 1 (Large) -->
+        <div class="reveal-fade-up hover-zoom-container h-80 lg:col-span-2 shadow-lg" style="--delay: 0.1s">
+          <img 
+            src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=1200" 
+            alt="Salle de banquet décorée" 
+            class="w-full h-full object-cover hover-zoom-img"
+          >
+          <div class="absolute inset-0 bg-navy/20 hover:bg-navy/10 transition-all duration-300 flex items-end p-6">
+            <span class="text-white font-serif italic text-xl">Mariage Royal - Lubumbashi</span>
+          </div>
+        </div>
+
+        <!-- Image 2 -->
+        <div class="reveal-fade-up hover-zoom-container h-80 shadow-lg" style="--delay: 0.3s">
+          <img 
+            src="https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&q=80&w=800" 
+            alt="Bouquets de table" 
+            class="w-full h-full object-cover hover-zoom-img"
+          >
+          <div class="absolute inset-0 bg-navy/20 hover:bg-navy/10 transition-all duration-300 flex items-end p-6">
+            <span class="text-white font-serif italic text-xl">Dîner de Gala Corporate</span>
+          </div>
+        </div>
+
+        <!-- Image 3 -->
+        <div class="reveal-fade-up hover-zoom-container h-80 shadow-lg" style="--delay: 0.1s">
+          <img 
+            src="https://images.unsplash.com/photo-1544078751-58feb2dcbda7?auto=format&fit=crop&q=80&w=800" 
+            alt="Pièce montée de luxe" 
+            class="w-full h-full object-cover hover-zoom-img"
+          >
+          <div class="absolute inset-0 bg-navy/20 hover:bg-navy/10 transition-all duration-300 flex items-end p-6">
+            <span class="text-white font-serif italic text-xl">Pièce Montée Haute Couture</span>
+          </div>
+        </div>
+
+        <!-- Image 4 (Large) -->
+        <div class="reveal-fade-up hover-zoom-container h-80 lg:col-span-2 shadow-lg" style="--delay: 0.3s">
+          <img 
+            src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=1200" 
+            alt="Ambiance extérieure" 
+            class="w-full h-full object-cover hover-zoom-img"
+          >
+          <div class="absolute inset-0 bg-navy/20 hover:bg-navy/10 transition-all duration-300 flex items-end p-6">
+            <span class="text-white font-serif italic text-xl">Réception en Plein Air - Goma</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Pied de page -->
+  <footer class="bg-navy text-white py-16 border-t border-white/5 text-center">
+    <div class="container mx-auto px-6">
+      <h2 class="text-2xl md:text-3xl font-serif text-gold italic mb-4">"Faire de chaque événement une bénédiction mémorable."</h2>
+      <p class="text-slate-400 text-xs tracking-widest uppercase mb-10">Excellence & Distinction</p>
+      <div class="text-xs text-slate-500">
+        &copy; 2026 Blessing Event. Tous droits réservés.
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       JAVASCRIPT NATIF - INTERSECTION OBSERVER
+       ========================================================================== -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Configuration de l'Intersection Observer
+      const observerOptions = {
+        root: null, // viewport par défaut
+        rootMargin: "0px 0px -10% 0px", // Déclenche un peu avant que l'élément soit entièrement visible
+        threshold: 0.05 // Déclenche dès que 5% de l'élément est visible
+      };
+
+      // Création de l'observer
+      const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // Ajouter la classe pour déclencher l'animation CSS
+            entry.target.classList.add("is-visible");
+            
+            // Une fois que l'élément est révélé, on arrête de l'observer (facultatif mais recommandé pour la performance)
+            observer.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      // Cibler tous les éléments que l'on souhaite animer au défilement
+      const elementsToReveal = document.querySelectorAll(".reveal-fade-up, .reveal-fade-in");
+      
+      elementsToReveal.forEach(element => {
+        revealObserver.observe(element);
+      });
+      
+      // OPTIONNEL : Calcul automatique de délai (stagger) pour les listes
+      // Si plusieurs éléments sont dans le même conteneur, on peut ajuster automatiquement leur délai
+      const containers = document.querySelectorAll(".grid, .flex");
+      containers.forEach(container => {
+        const items = container.querySelectorAll(".reveal-fade-up");
+        if (items.length > 1) {
+          items.forEach((item, index) => {
+            // Si le délai n'a pas été défini manuellement en inline HTML, on le calcule
+            if (!item.style.getPropertyValue("--delay")) {
+              item.style.setProperty("--delay", `${index * 0.15}s`);
+            }
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
