@@ -24,7 +24,8 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [phone, setPhone] = useState('+243');
+  
+  // No need for phone input anymore since CinetPay handles it
 
   const totalTickets = cart.reduce((s, c) => s + c.quantity, 0);
 
@@ -52,6 +53,42 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
       });
       setAttendees(list);
     });
+
+    // Handle CinetPay Return (Check if we were redirected back)
+    const pendingTxn = sessionStorage.getItem('pending_cinetpay_txn');
+    const pendingOrderId = sessionStorage.getItem('pending_order_id');
+    if (pendingTxn && pendingOrderId) {
+      setStep('payment');
+      setLoading(true);
+      setError('Vérification du paiement en cours...');
+      
+      const unsubscribe = onSnapshot(doc(db, "transactions", pendingTxn), async (docSnap) => {
+          if (docSnap.exists()) {
+              const tx = docSnap.data();
+              if (tx.status === "success") {
+                  unsubscribe();
+                  try {
+                      const { order: paidOrder, tickets: issued } = await completePayment(pendingOrderId);
+                      setOrder(paidOrder);
+                      setTickets(issued);
+                      setStep('success');
+                      sessionStorage.removeItem('be_checkout_cart');
+                      sessionStorage.removeItem('pending_cinetpay_txn');
+                      sessionStorage.removeItem('pending_order_id');
+                  } catch (err) {
+                      setError("Erreur lors de la génération des billets.");
+                  }
+                  setLoading(false);
+              } else if (tx.status === "failed") {
+                  unsubscribe();
+                  setError("Le paiement a été refusé ou annulé.");
+                  sessionStorage.removeItem('pending_cinetpay_txn');
+                  setLoading(false);
+              }
+          }
+      });
+      return () => unsubscribe();
+    }
   }, [eventSlug, onNavigate]);
 
   const updateAttendee = (index: number, field: keyof Attendee, value: string) => {
@@ -110,48 +147,37 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
 
   const handlePayment = async () => {
     if (!order || !event) return;
-    if (!phone.startsWith('+243') || phone.length < 12) {
-      setError('Veuillez entrer un numéro valide (ex: +243...)');
-      return;
-    }
+    
     setLoading(true);
     setError('');
 
     try {
       const functions = getFunctions(app);
-      const initiatePayment = httpsCallable(functions, 'initiateMobileMoneyPayment');
+      const initiatePayment = httpsCallable(functions, 'initiateCinetPayPayment');
       
       const result = await initiatePayment({
         eventId: event.id,
-        phone,
         amount: order.total,
         currency: order.currency,
-        type: 'ticket'
+        type: 'ticket',
+        returnUrl: window.location.href
       });
       
-      const transactionId = (result.data as any).transactionId;
-      setError('Veuillez valider le message push USSD sur votre téléphone...');
+      const data = result.data as any;
+      const transactionId = data.transactionId;
+      const paymentUrl = data.paymentUrl;
       
       if (!db) throw new Error("Firestore n'est pas activé ou initialisé");
 
-      const unsubscribe = onSnapshot(doc(db, "transactions", transactionId), async (docSnap) => {
-          if (docSnap.exists()) {
-              const tx = docSnap.data();
-              if (tx.status === "success") {
-                  unsubscribe();
-                  const { order: paidOrder, tickets: issued } = await completePayment(order.id);
-                  setOrder(paidOrder);
-                  setTickets(issued);
-                  setStep('success');
-                  sessionStorage.removeItem('be_checkout_cart');
-                  setLoading(false);
-              } else if (tx.status === "failed") {
-                  unsubscribe();
-                  setError("Le paiement a échoué ou a été annulé.");
-                  setLoading(false);
-              }
-          }
-      });
+      // Save references in sessionStorage in case of redirect
+      sessionStorage.setItem('pending_cinetpay_txn', transactionId);
+      sessionStorage.setItem('pending_order_id', order.id);
+
+      setError('Redirection vers la page de paiement sécurisée...');
+      
+      // Redirect to CinetPay
+      window.location.href = paymentUrl;
+
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur lors de l\'initiation');
       setLoading(false);
@@ -291,13 +317,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
               </div>
 
               <div className="space-y-3 mb-6">
-                <input
-                  type="tel"
-                  placeholder="Numéro Mobile Money (ex: +243...)"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:border-gold focus:outline-none"
-                />
+                 {/* CinetPay doesn't need phone input here */}
               </div>
 
               <p className="text-xs text-slate-400 mb-4 flex items-center gap-2">
