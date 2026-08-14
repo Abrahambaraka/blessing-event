@@ -1,5 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { verifyBearerToken, json } from '../_lib/auth';
+import { assertSupabaseAdmin } from '../_lib/supabaseAdmin';
+import { loadOrderById } from '../_lib/ticketing';
+import { createPendingPayment } from '../_lib/payments';
 
 /**
  * POST /api/payments/initiate
@@ -21,6 +24,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return json(res, 401, { error: 'Authentification requise pour payer.' });
   }
 
+  const admin = assertSupabaseAdmin();
+  const order = await loadOrderById(admin, orderId);
+  if (!order) {
+    return json(res, 404, { error: 'Commande introuvable.' });
+  }
+
   const apiKey = process.env.CINETPAY_API_KEY;
   const siteId = process.env.CINETPAY_SITE_ID;
   const notifyUrl = process.env.CINETPAY_NOTIFY_URL;
@@ -29,16 +38,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/#my-tickets` : undefined);
 
   if (!apiKey || !siteId) {
+    const transactionId = `mock-${orderId}`;
+    await createPendingPayment(admin, {
+      orderId,
+      transactionId,
+      provider: 'mock',
+      amount: Number(amount),
+      currency,
+    });
+
     return json(res, 200, {
       success: true,
       mode: 'mock',
-      transactionId: `mock-${orderId}`,
+      transactionId,
       message: 'CinetPay non configuré — paiement simulé côté client.',
     });
   }
 
   try {
     const transactionId = `${orderId}__${Date.now()}`;
+    await createPendingPayment(admin, {
+      orderId,
+      transactionId,
+      provider: 'cinetpay',
+      amount: Number(amount),
+      currency,
+    });
+
     const payload = {
       apikey: apiKey,
       site_id: siteId,

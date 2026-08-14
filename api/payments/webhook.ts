@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { json } from '../_lib/auth';
 import { assertSupabaseAdmin } from '../_lib/supabaseAdmin';
-import { completeOrderOnServer } from '../_lib/ticketing';
+import { fulfillOrderPayment, parseOrderIdFromTransactionId } from '../_lib/payments';
 
 /**
  * POST /api/payments/webhook — callback CinetPay
@@ -27,21 +27,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return json(res, 200, { ok: true, ignored: true, status });
   }
 
-  let orderId: string;
-  if (transactionId.startsWith('mock-')) {
-    orderId = transactionId.slice(5);
-  } else if (transactionId.includes('__')) {
-    orderId = transactionId.split('__')[0]!;
-  } else {
-    const parts = transactionId.split('-');
-    const last = parts[parts.length - 1] ?? '';
-    orderId = /^\d+$/.test(last) ? parts.slice(0, -1).join('-') : transactionId;
-  }
+  const orderId = parseOrderIdFromTransactionId(transactionId);
+  const provider = transactionId.startsWith('mock-') ? 'mock' : 'cinetpay';
 
   try {
     const admin = assertSupabaseAdmin();
-    const result = await completeOrderOnServer(admin, orderId);
-    return json(res, 200, { ok: true, orderId: result.order.id, ticketCount: result.tickets.length });
+    const result = await fulfillOrderPayment(admin, {
+      orderId,
+      transactionId,
+      provider,
+      webhookPayload: body,
+    });
+
+    return json(res, 200, {
+      ok: true,
+      orderId: result.order.id,
+      ticketCount: result.tickets.length,
+      alreadyProcessed: result.alreadyProcessed,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erreur webhook.';
     return json(res, 200, { ok: false, error: message });

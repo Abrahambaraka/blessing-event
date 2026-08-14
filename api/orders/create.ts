@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { verifyBearerToken, requireRole, json } from '../_lib/auth';
 import { assertSupabaseAdmin } from '../_lib/supabaseAdmin';
 import { createOrderOnServer } from '../_lib/ticketing';
+import { fulfillOrderPayment } from '../_lib/payments';
 import type { Attendee, CartItem } from '../../src/types/ticketing';
 
 /** POST /api/orders/create */
@@ -38,6 +39,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       attendees: (attendees ?? []) as Attendee[],
       buyerId: auth.userId,
     });
+
+    if (order.status === 'paid') {
+      await fulfillOrderPayment(admin, {
+        orderId: order.id,
+        transactionId: `free-${order.id}`,
+        provider: 'free',
+        amount: 0,
+        currency: order.currency,
+      });
+    }
 
     return json(res, 201, { order });
   } catch (err) {

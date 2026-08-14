@@ -1,5 +1,5 @@
 /**
- * Exécute supabase/migrations/001_ticketing.sql via SUPABASE_DB_URL
+ * Exécute supabase/migrations/*.sql dans l'ordre via SUPABASE_DB_URL
  * Usage : npm run db:migrate
  */
 import fs from 'fs';
@@ -31,8 +31,16 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const sqlPath = path.join(__dirname, '../supabase/migrations/001_ticketing.sql');
-const sql = fs.readFileSync(sqlPath, 'utf8');
+const migrationsDir = path.join(__dirname, '../supabase/migrations');
+const files = fs
+  .readdirSync(migrationsDir)
+  .filter((f) => f.endsWith('.sql'))
+  .sort();
+
+if (files.length === 0) {
+  console.error('Aucune migration trouvée.');
+  process.exit(1);
+}
 
 const client = new pg.Client({
   connectionString,
@@ -41,8 +49,12 @@ const client = new pg.Client({
 
 try {
   await client.connect();
-  await client.query(sql);
-  console.log('✓ Migration 001_ticketing.sql appliquée avec succès.');
+  for (const file of files) {
+    const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+    await client.query(sql);
+    console.log(`✓ ${file}`);
+  }
+  console.log('✓ Toutes les migrations appliquées.');
 } catch (err) {
   console.error('✗ Erreur migration :', err instanceof Error ? err.message : err);
   process.exit(1);

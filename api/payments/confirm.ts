@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyBearerToken, requireRole, json } from '../_lib/auth';
+import { verifyBearerToken, json } from '../_lib/auth';
 import { assertSupabaseAdmin } from '../_lib/supabaseAdmin';
-import { completeOrderOnServer, loadOrderById } from '../_lib/ticketing';
+import { loadOrderById } from '../_lib/ticketing';
+import { fulfillOrderPayment } from '../_lib/payments';
 
 /** POST /api/payments/confirm — confirmation mock / retour client */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -9,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return json(res, 405, { error: 'Method not allowed' });
   }
 
-  const { orderId } = req.body ?? {};
+  const { orderId, transactionId } = req.body ?? {};
   if (!orderId) {
     return json(res, 400, { error: 'orderId requis' });
   }
@@ -32,8 +33,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return json(res, 401, { error: 'Authentification requise.' });
     }
 
-    const result = await completeOrderOnServer(admin, orderId);
-    return json(res, 200, { ok: true, ...result });
+    const txId = typeof transactionId === 'string' ? transactionId : `mock-${orderId}`;
+    const result = await fulfillOrderPayment(admin, {
+      orderId,
+      transactionId: txId,
+      provider: txId.startsWith('mock-') ? 'mock' : 'cinetpay',
+    });
+
+    return json(res, 200, { ok: true, alreadyProcessed: result.alreadyProcessed, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Confirmation paiement échouée.';
     return json(res, 400, { error: message });
