@@ -72,7 +72,10 @@ export async function saveOrder(order: Order): Promise<void> {
     event_id: order.eventId,
     buyer_email: order.buyerEmail,
     status: order.status,
+    total_amount: order.total,
+    currency: order.currency,
     data: order,
+    paid_at: order.paidAt ?? null,
   });
   if (error) throw new Error(error.message);
 }
@@ -93,6 +96,7 @@ export async function saveTickets(tickets: Ticket[]): Promise<void> {
     holder_email: t.holderEmail,
     status: t.status,
     data: t,
+    checked_in_at: t.checkedInAt ?? null,
   }));
   const { error } = await assertSupabase().from('be_tickets').upsert(rows);
   if (error) throw new Error(error.message);

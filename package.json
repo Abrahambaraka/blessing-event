@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && vercel deploy --prod --yes"
+    "deploy": "npm run build && vercel deploy --prod --yes",
+    "db:migrate": "node scripts/db-migrate.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
@@ -22,6 +23,7 @@
     "@types/uuid": "^10.0.0",
     "@vercel/node": "^5.10.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "pg": "^8.23.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

@@ -8,10 +8,15 @@ export interface AuthContext {
   role: UserRole;
 }
 
-export async function verifyBearerToken(req: VercelRequest): Promise<AuthContext | null> {
-  const url = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY;
+function getSupabaseConfig() {
+  return {
+    url: process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '',
+    anonKey: process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '',
+  };
+}
 
+export async function verifyBearerToken(req: VercelRequest): Promise<AuthContext | null> {
+  const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey) return null;
 
   const header = req.headers.authorization;
@@ -22,14 +27,22 @@ export async function verifyBearerToken(req: VercelRequest): Promise<AuthContext
   const { data: { user }, error } = await client.auth.getUser(token);
   if (error || !user) return null;
 
-  const role = user.user_metadata?.role ?? user.app_metadata?.role ?? 'client';
-  const parsedRole: UserRole =
-    role === 'super_admin' || role === 'staff' || role === 'client' ? role : 'client';
+  let role: UserRole = 'client';
+  const { data: profile } = await client
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const rawRole = profile?.role ?? user.user_metadata?.role ?? user.app_metadata?.role;
+  if (rawRole === 'super_admin' || rawRole === 'staff' || rawRole === 'client') {
+    role = rawRole;
+  }
 
   return {
     userId: user.id,
     email: user.email ?? '',
-    role: parsedRole,
+    role,
   };
 }
 
