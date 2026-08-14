@@ -96,7 +96,7 @@ Envoyé depuis le site Blessing Event
               <p className="text-[10px] md:text-xs uppercase tracking-widest text-gold font-bold mb-3 md:mb-4">Réseaux Sociaux</p>
               <div className="flex space-x-3 md:space-x-4">
                 <a href="#" className="w-9 h-9 md:w-10 md:h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-gold transition-custom"><Instagram size={18} className="md:w-5 md:h-5" /></a>
-                <a href="#" className="w-9 h-9 md:w-10 md:h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-gold transition-custom"><Facebook size={18} className="md:w-5 md:h-5" /></a>
+                <a href={SITE_CONTACT.facebook} target="_blank" rel="noopener noreferrer" className="w-9 h-9 md:w-10 md:h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-gold transition-custom" aria-label="Facebook Blessing Event"><Facebook size={18} className="md:w-5 md:h-5" /></a>
                 <a href="#" className="w-9 h-9 md:w-10 md:h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-gold transition-custom"><Linkedin size={18} className="md:w-5 md:h-5" /></a>
               </div>
             </div>

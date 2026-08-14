@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { X, Smartphone, Plus, Minus } from 'lucide-react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db, app } from '../../firebase';
+import { X, Plus, Minus } from 'lucide-react';
+import { castVotes } from '../../services/ticketingService';
 import type { Event, Participant } from '../../types/ticketing';
 import { formatPrice } from '../../lib/fees';
 
@@ -17,8 +15,8 @@ const VoteModal: React.FC<VoteModalProps> = ({ event, participant, onClose, onSu
   const [voteCount, setVoteCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const votePrice = event.votePrice || 1; // Default 1
+
+  const votePrice = event.votePrice || 1;
   const total = votePrice * voteCount;
 
   const handlePayment = async () => {
@@ -26,38 +24,14 @@ const VoteModal: React.FC<VoteModalProps> = ({ event, participant, onClose, onSu
     setError('');
 
     try {
-      const functions = getFunctions(app);
-      const initiatePayment = httpsCallable(functions, 'initiateCinetPayPayment');
-      
-      const result = await initiatePayment({
-        eventId: event.id,
-        amount: total,
-        currency: event.currency || 'USD',
-        type: 'vote',
-        participantId: participant.id,
-        voteCount: voteCount,
-        returnUrl: window.location.href
-      });
-      
-      const data = result.data as any;
-      const transactionId = data.transactionId;
-      const paymentUrl = data.paymentUrl;
-      
-      if (!db) throw new Error("Firestore n'est pas activé ou initialisé");
-
-      // Save references in sessionStorage in case of redirect
-      sessionStorage.setItem('pending_cinetpay_vote_txn', transactionId);
-      sessionStorage.setItem('pending_vote_participant', participant.id);
-
-      setError('Redirection vers la page de paiement sécurisée...');
-      
-      // Redirect to CinetPay
-      window.location.href = paymentUrl;
-
+      await new Promise((r) => setTimeout(r, 800));
+      await castVotes(event.id, participant.id, voteCount);
+      onSuccess();
+      onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur lors de l\'initiation du paiement');
-      setLoading(false);
+      setError(e instanceof Error ? e.message : 'Erreur lors du vote');
     }
+    setLoading(false);
   };
 
   return (
@@ -89,7 +63,7 @@ const VoteModal: React.FC<VoteModalProps> = ({ event, participant, onClose, onSu
           <div className="mb-8">
             <label className="block text-sm font-medium text-slate-700 mb-4 text-center">Nombre de votes</label>
             <div className="flex items-center justify-center gap-4">
-              <button 
+              <button
                 onClick={() => setVoteCount(Math.max(1, voteCount - 1))}
                 className="w-12 h-12 flex items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:border-gold hover:text-gold transition-colors"
               >
@@ -98,7 +72,7 @@ const VoteModal: React.FC<VoteModalProps> = ({ event, participant, onClose, onSu
               <div className="w-20 text-center">
                 <span className="text-3xl font-bold text-navy">{voteCount}</span>
               </div>
-              <button 
+              <button
                 onClick={() => setVoteCount(voteCount + 1)}
                 className="w-12 h-12 flex items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:border-gold hover:text-gold transition-colors"
               >
@@ -116,20 +90,13 @@ const VoteModal: React.FC<VoteModalProps> = ({ event, participant, onClose, onSu
             </div>
           )}
 
-          <div className="space-y-4">
-            <p className="text-xs text-slate-400 text-center flex items-center justify-center gap-2">
-              <Smartphone size={14} />
-              Paiement sécurisé via CinetPay
-            </p>
-
-            <button
-              onClick={handlePayment}
-              disabled={loading}
-              className="w-full py-4 bg-gold text-white font-bold text-sm uppercase tracking-[0.2em] rounded-lg hover:bg-gold/90 transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Redirection...' : `Payer ${formatPrice(total, event.currency || 'USD')}`}
-            </button>
-          </div>
+          <button
+            onClick={handlePayment}
+            disabled={loading}
+            className="w-full py-4 bg-gold text-white font-bold text-sm uppercase tracking-[0.2em] rounded-lg hover:bg-gold/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Traitement...' : `Confirmer ${voteCount} vote${voteCount > 1 ? 's' : ''}`}
+          </button>
         </div>
       </div>
     </div>

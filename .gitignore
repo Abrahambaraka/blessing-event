@@ -23,8 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Firebase
-.firebase/
-firebase-debug.log*
-firestore-debug.log*
-ui-debug.log*
+# Vercel
+.vercel/*
+!.vercel/project.json

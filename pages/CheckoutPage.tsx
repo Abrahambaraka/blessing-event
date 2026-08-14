@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, CreditCard, CheckCircle, Mail, Smartphone } from 'lucide-react';
+import { ArrowLeft, CreditCard, CheckCircle, Mail } from 'lucide-react';
 import TicketDisplay from '../components/ticketing/TicketDisplay';
 import { fetchEvent, createOrder, completePayment } from '../src/services/ticketingService';
 import { formatPrice } from '../src/lib/fees';
 import type { Attendee, CartItem, Event, Order, Ticket } from '../src/types/ticketing';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db, app } from '../src/firebase';
 
 interface CheckoutPageProps {
   eventSlug: string;
@@ -24,8 +21,6 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // No need for phone input anymore since CinetPay handles it
 
   const totalTickets = cart.reduce((s, c) => s + c.quantity, 0);
 
@@ -53,42 +48,6 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
       });
       setAttendees(list);
     });
-
-    // Handle CinetPay Return (Check if we were redirected back)
-    const pendingTxn = sessionStorage.getItem('pending_cinetpay_txn');
-    const pendingOrderId = sessionStorage.getItem('pending_order_id');
-    if (pendingTxn && pendingOrderId) {
-      setStep('payment');
-      setLoading(true);
-      setError('Vérification du paiement en cours...');
-      
-      const unsubscribe = onSnapshot(doc(db, "transactions", pendingTxn), async (docSnap) => {
-          if (docSnap.exists()) {
-              const tx = docSnap.data();
-              if (tx.status === "success") {
-                  unsubscribe();
-                  try {
-                      const { order: paidOrder, tickets: issued } = await completePayment(pendingOrderId);
-                      setOrder(paidOrder);
-                      setTickets(issued);
-                      setStep('success');
-                      sessionStorage.removeItem('be_checkout_cart');
-                      sessionStorage.removeItem('pending_cinetpay_txn');
-                      sessionStorage.removeItem('pending_order_id');
-                  } catch (err) {
-                      setError("Erreur lors de la génération des billets.");
-                  }
-                  setLoading(false);
-              } else if (tx.status === "failed") {
-                  unsubscribe();
-                  setError("Le paiement a été refusé ou annulé.");
-                  sessionStorage.removeItem('pending_cinetpay_txn');
-                  setLoading(false);
-              }
-          }
-      });
-      return () => unsubscribe();
-    }
   }, [eventSlug, onNavigate]);
 
   const updateAttendee = (index: number, field: keyof Attendee, value: string) => {
@@ -146,42 +105,21 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
   };
 
   const handlePayment = async () => {
-    if (!order || !event) return;
-    
+    if (!order) return;
     setLoading(true);
     setError('');
 
     try {
-      const functions = getFunctions(app);
-      const initiatePayment = httpsCallable(functions, 'initiateCinetPayPayment');
-      
-      const result = await initiatePayment({
-        eventId: event.id,
-        amount: order.total,
-        currency: order.currency,
-        type: 'ticket',
-        returnUrl: window.location.href
-      });
-      
-      const data = result.data as any;
-      const transactionId = data.transactionId;
-      const paymentUrl = data.paymentUrl;
-      
-      if (!db) throw new Error("Firestore n'est pas activé ou initialisé");
-
-      // Save references in sessionStorage in case of redirect
-      sessionStorage.setItem('pending_cinetpay_txn', transactionId);
-      sessionStorage.setItem('pending_order_id', order.id);
-
-      setError('Redirection vers la page de paiement sécurisée...');
-      
-      // Redirect to CinetPay
-      window.location.href = paymentUrl;
-
+      await new Promise((r) => setTimeout(r, 1200));
+      const { order: paidOrder, tickets: issued } = await completePayment(order.id);
+      setOrder(paidOrder);
+      setTickets(issued);
+      setStep('success');
+      sessionStorage.removeItem('be_checkout_cart');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur lors de l\'initiation');
-      setLoading(false);
+      setError(e instanceof Error ? e.message : 'Paiement échoué');
     }
+    setLoading(false);
   };
 
   if (!event) {
@@ -316,13 +254,9 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
                 <span className="text-2xl font-bold text-navy">{formatPrice(order.total, order.currency)}</span>
               </div>
 
-              <div className="space-y-3 mb-6">
-                 {/* CinetPay doesn't need phone input here */}
-              </div>
-
               <p className="text-xs text-slate-400 mb-4 flex items-center gap-2">
-                <Smartphone size={14} />
-                Paiement sécurisé via FlexPay (M-Pesa, Orange, Airtel).
+                <CreditCard size={14} />
+                Mode démo — intégration paiement via API à brancher.
               </p>
 
               <button

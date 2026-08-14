@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { SITE_CONTACT } from '../src/constants/contact';
 
 interface FooterProps {
   onNavigate: (page: string) => void;
@@ -36,7 +37,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <h4 className="text-navy font-bold uppercase tracking-wide md:tracking-widest text-xs md:text-sm mb-4 md:mb-6">Suivez-Nous</h4>
             <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-slate-500">
               <li><a href="#" className="hover:text-gold transition-colors">Instagram</a></li>
-              <li><a href="#" className="hover:text-gold transition-colors">Facebook</a></li>
+              <li><a href={SITE_CONTACT.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">Facebook</a></li>
               <li><a href="#" className="hover:text-gold transition-colors">LinkedIn</a></li>
             </ul>
           </div>

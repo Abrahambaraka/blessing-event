@@ -5,8 +5,6 @@ import { fetchEvent } from '../src/services/ticketingService';
 import { calculateOrderFees, formatPrice, getTicketCurrency } from '../src/lib/fees';
 import type { CartItem, Event, Participant } from '../src/types/ticketing';
 import VoteModal from '../src/components/ticketing/VoteModal';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../src/firebase';
 
 interface EventDetailPageProps {
   eventSlug: string;
@@ -20,43 +18,19 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
   const [loading, setLoading] = useState(true);
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [voteSuccess, setVoteSuccess] = useState('');
-  const [verifyingVote, setVerifyingVote] = useState(false);
 
   useEffect(() => {
     fetchEvent(eventSlug).then((data) => {
       setEvent(data);
       setLoading(false);
     });
-
-    const pendingVoteTxn = sessionStorage.getItem('pending_cinetpay_vote_txn');
-    if (pendingVoteTxn) {
-      setVerifyingVote(true);
-      const unsubscribe = onSnapshot(doc(db, "transactions", pendingVoteTxn), (docSnap) => {
-          if (docSnap.exists()) {
-              const tx = docSnap.data();
-              if (tx.status === "success") {
-                  unsubscribe();
-                  setVoteSuccess('Votre vote a été comptabilisé avec succès ! Merci de votre soutien.');
-                  sessionStorage.removeItem('pending_cinetpay_vote_txn');
-                  sessionStorage.removeItem('pending_vote_participant');
-                  setVerifyingVote(false);
-                  
-                  // Refresh event to get new vote count
-                  fetchEvent(eventSlug).then(setEvent);
-                  
-                  // Hide success message after 5 seconds
-                  setTimeout(() => setVoteSuccess(''), 5000);
-              } else if (tx.status === "failed") {
-                  unsubscribe();
-                  sessionStorage.removeItem('pending_cinetpay_vote_txn');
-                  sessionStorage.removeItem('pending_vote_participant');
-                  setVerifyingVote(false);
-              }
-          }
-      });
-      return () => unsubscribe();
-    }
   }, [eventSlug]);
+
+  const handleVoteSuccess = () => {
+    setVoteSuccess('Votre vote a été comptabilisé avec succès ! Merci de votre soutien.');
+    fetchEvent(eventSlug).then(setEvent);
+    setTimeout(() => setVoteSuccess(''), 5000);
+  };
 
   if (loading) {
     return (
@@ -167,12 +141,6 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
                 {voteSuccess}
               </div>
             )}
-            
-            {verifyingVote && (
-              <div className="mb-8 p-4 bg-blue-50 border border-blue-200 text-blue-700 font-medium rounded-lg animate-pulse">
-                Vérification du paiement de votre vote en cours...
-              </div>
-            )}
 
             {event.participants && event.participants.length > 0 && (
               <div className="mb-12">
@@ -249,8 +217,8 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
         <VoteModal 
           event={event} 
           participant={selectedParticipant} 
-          onClose={() => setSelectedParticipant(null)} 
-          onSuccess={() => setSelectedParticipant(null)}
+          onClose={() => setSelectedParticipant(null)}
+          onSuccess={handleVoteSuccess}
         />
       )}
     </div>

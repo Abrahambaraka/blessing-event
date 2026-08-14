@@ -1,17 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  query,
-  where,
-  onSnapshot,
-  type Unsubscribe,
-} from 'firebase/firestore';
-import { db, isFirestoreEnabled } from '../firebase';
-import type { Attendee, CartItem, Event, Order, Ticket, TicketStatus } from '../types/ticketing';
+import type { Attendee, CartItem, Event, Order, Ticket } from '../types/ticketing';
 import { calculateOrderFees, calculateTicketFee, getTicketCurrency } from '../lib/fees';
 import { generateId, generateTicketCode } from '../lib/ticketCode';
 import * as storage from '../lib/storage';
@@ -28,91 +15,30 @@ function updateEventSoldCounts(event: Event, items: CartItem[]): Event {
 }
 
 async function persistEvent(event: Event): Promise<void> {
-  storage.saveEvents(
-    storage.getEvents().map((e) => (e.id === event.id ? event : e))
-  );
-  if (isFirestoreEnabled && db) {
-    await setDoc(doc(db, 'events', event.id), event);
-  }
+  storage.saveEvents(storage.getEvents().map((e) => (e.id === event.id ? event : e)));
 }
 
 async function persistOrder(order: Order): Promise<void> {
   storage.saveOrder(order);
-  if (isFirestoreEnabled && db) {
-    await setDoc(doc(db, 'orders', order.id), order);
-  }
 }
 
 async function persistTickets(tickets: Ticket[]): Promise<void> {
   storage.saveTickets(tickets);
-  if (isFirestoreEnabled && db) {
-    await Promise.all(tickets.map((t) => setDoc(doc(db, 'tickets', t.id), t)));
-  }
 }
 
 export async function fetchPublishedEvents(): Promise<Event[]> {
-  // Toujours partir du stockage local (fiable pour les événements démo)
-  const local = storage.getPublishedEvents();
-  if (local.length > 0) return local;
-
-  if (isFirestoreEnabled && db) {
-    try {
-      const q = query(collection(db, 'events'), where('status', '==', 'published'));
-      const snap = await getDocs(q);
-      if (!snap.empty) return snap.docs.map((d) => d.data() as Event);
-    } catch {
-      /* ignore */
-    }
-  }
-
-  return local;
+  return storage.getPublishedEvents();
 }
 
 export async function fetchEvent(idOrSlug: string): Promise<Event | null> {
-  const local = storage.getEventById(idOrSlug);
-  if (local) return local;
-
-  if (isFirestoreEnabled && db) {
-    try {
-      const byId = await getDoc(doc(db, 'events', idOrSlug));
-      if (byId.exists()) return byId.data() as Event;
-      const all = await getDocs(collection(db, 'events'));
-      const match = all.docs.find((d) => (d.data() as Event).slug === idOrSlug);
-      if (match) return match.data() as Event;
-    } catch {
-      /* fallback */
-    }
-  }
-
-  return null;
+  return storage.getEventById(idOrSlug) ?? null;
 }
 
 export async function fetchAllEvents(): Promise<Event[]> {
-  if (isFirestoreEnabled && db) {
-    try {
-      const snap = await getDocs(collection(db, 'events'));
-      if (!snap.empty) return snap.docs.map((d) => d.data() as Event);
-    } catch {
-      /* fallback */
-    }
-  }
   return storage.getEvents();
 }
 
-export function subscribeToEvents(callback: (events: Event[]) => void): Unsubscribe {
-  if (isFirestoreEnabled && db) {
-    try {
-      return onSnapshot(collection(db, 'events'), (snap) => {
-        if (!snap.empty) {
-          callback(snap.docs.map((d) => d.data() as Event));
-          return;
-        }
-        callback(storage.getEvents());
-      });
-    } catch {
-      /* fallback */
-    }
-  }
+export function subscribeToEvents(callback: (events: Event[]) => void): () => void {
   callback(storage.getEvents());
   return () => {};
 }
@@ -245,14 +171,6 @@ export async function fetchTicketsByEmail(email: string): Promise<Ticket[]> {
 }
 
 export async function fetchOrder(orderId: string): Promise<Order | null> {
-  if (isFirestoreEnabled && db) {
-    try {
-      const snap = await getDoc(doc(db, 'orders', orderId));
-      if (snap.exists()) return snap.data() as Order;
-    } catch {
-      /* fallback */
-    }
-  }
   return storage.getOrderById(orderId) ?? null;
 }
 
@@ -273,26 +191,13 @@ export async function checkInTicket(
   ticket.checkedInAt = new Date().toISOString();
   storage.saveTickets([ticket]);
 
-  const record = {
+  storage.saveCheckIn({
     id: generateId(),
     ticketId: ticket.id,
     eventId: ticket.eventId,
     scannedAt: ticket.checkedInAt,
     scannedBy,
-  };
-  storage.saveCheckIn(record);
-
-  if (isFirestoreEnabled && db) {
-    try {
-      await updateDoc(doc(db, 'tickets', ticket.id), {
-        status: 'checked_in' as TicketStatus,
-        checkedInAt: ticket.checkedInAt,
-      });
-      await setDoc(doc(db, 'checkins', record.id), record);
-    } catch {
-      /* local ok */
-    }
-  }
+  });
 
   return { success: true, message: `Entrée validée — ${ticket.holderName}`, ticket };
 }
@@ -303,10 +208,6 @@ export async function saveEvent(event: Event): Promise<void> {
   if (idx >= 0) events[idx] = event;
   else events.push(event);
   storage.saveEvents(events);
-
-  if (isFirestoreEnabled && db) {
-    await setDoc(doc(db, 'events', event.id), event);
-  }
 }
 
 export async function updateEventStatus(eventId: string, status: Event['status']): Promise<void> {
@@ -315,6 +216,22 @@ export async function updateEventStatus(eventId: string, status: Event['status']
   event.status = status;
   event.updatedAt = new Date().toISOString();
   await saveEvent(event);
+}
+
+export async function castVotes(eventId: string, participantId: string, voteCount: number): Promise<Event | null> {
+  const event = storage.getEventById(eventId);
+  if (!event?.participants) return null;
+
+  const updated: Event = {
+    ...event,
+    participants: event.participants.map((p) =>
+      p.id === participantId ? { ...p, voteCount: p.voteCount + voteCount } : p
+    ),
+    updatedAt: new Date().toISOString(),
+  };
+
+  await saveEvent(updated);
+  return updated;
 }
 
 export function getEventStats(eventId: string) {
