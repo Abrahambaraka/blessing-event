@@ -14,36 +14,38 @@ const Contact: React.FC = () => {
 
     const form = e.currentTarget;
     const formData = new FormData(form);
-    
-    // Créer le corps de l'email
+
     const name = formData.get('name');
     const email = formData.get('email');
     const eventType = formData.get('eventType');
     const message = formData.get('message');
-    
-    const emailBody = `
-Nouvelle demande de devis - Blessing Event
-
-Nom: ${name}
-Email: ${email}
-Type d'événement: ${eventType}
-
-Message:
-${message}
-
----
-Envoyé depuis le site Blessing Event
-    `.trim();
 
     try {
-      // Utiliser mailto comme solution temporaire
-      const mailtoLink = `mailto:${SITE_CONTACT.email}?subject=Demande de devis - ${eventType}&body=${encodeURIComponent(emailBody)}`;
-      window.location.href = mailtoLink;
-      
+      const response = await fetch(SITE_CONTACT.formEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          eventType,
+          message,
+          _subject: `Demande de devis - ${eventType}`,
+          _captcha: 'false',
+          _template: 'table',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('FormSubmit error');
+      }
+
       setSubmitStatus('success');
       form.reset();
-      setTimeout(() => setSubmitStatus('idle'), 5000);
-    } catch (error) {
+      setTimeout(() => setSubmitStatus('idle'), 8000);
+    } catch {
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -105,6 +107,7 @@ Envoyé depuis le site Blessing Event
           {/* Form Side */}
           <div className="p-6 md:p-12 lg:w-3/5">
             <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+              <input type="text" name="_honey" className="hidden" tabIndex={-1} autoComplete="off" aria-hidden="true" />
               <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label htmlFor="name" className="block text-[10px] md:text-xs uppercase tracking-widest text-navy font-bold mb-2">Nom Complet</label>
@@ -164,7 +167,10 @@ Envoyé depuis le site Blessing Event
               
               {submitStatus === 'error' && (
                 <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded text-sm">
-                  ✗ Une erreur s'est produite. Veuillez réessayer ou nous contacter directement par téléphone.
+                  ✗ Une erreur s'est produite. Réessayez ou écrivez-nous à{' '}
+                  <a href={`mailto:${SITE_CONTACT.email}`} className="underline font-semibold">
+                    {SITE_CONTACT.email}
+                  </a>.
                 </div>
               )}
               
