@@ -11,6 +11,7 @@ import {
   apiFetchMyTickets,
   shouldUseTicketingApi,
 } from './ticketingApiService';
+import { fetchEventFromApi, fetchPublishedEventsFromApi } from './eventsApiService';
 
 const ORDER_EXPIRY_MINUTES = 15;
 
@@ -81,13 +82,18 @@ function updateEventSoldCounts(event: Event, items: CartItem[]): Event {
 }
 
 export async function fetchPublishedEvents(): Promise<Event[]> {
-  if (isSupabaseEnabled) return sb.fetchPublishedEvents();
+  if (isSupabaseEnabled) return fetchPublishedEventsFromApi();
   return storage.getPublishedEvents();
 }
 
 export async function fetchEvent(idOrSlug: string): Promise<Event | null> {
-  const ev = await getEventById(idOrSlug);
-  return ev ?? null;
+  if (isSupabaseEnabled) {
+    const fromApi = await fetchEventFromApi(idOrSlug);
+    if (fromApi) return fromApi;
+    const ev = await getEventById(idOrSlug);
+    return ev ?? null;
+  }
+  return storage.getEventById(idOrSlug) ?? null;
 }
 
 export async function fetchAllEvents(): Promise<Event[]> {

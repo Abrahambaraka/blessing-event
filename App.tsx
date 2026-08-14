@@ -100,9 +100,9 @@ const App: React.FC = () => {
       case 'contact':
         return <ContactPage />;
       case 'events':
-        return wrapProtected('events', <EventsPage onNavigate={navigate} />);
+        return <EventsPage onNavigate={navigate} />;
       case 'event-detail':
-        return wrapProtected('event-detail', <EventDetailPage eventSlug={route.slug} onNavigate={navigate} />, `events/${route.slug}`);
+        return <EventDetailPage eventSlug={route.slug} onNavigate={navigate} />;
       case 'checkout':
         return wrapProtected('checkout', <CheckoutPage eventSlug={route.slug} onNavigate={navigate} />, `checkout/${route.slug}`);
       case 'my-tickets':

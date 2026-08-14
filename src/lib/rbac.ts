@@ -8,12 +8,12 @@ export const PUBLIC_ROUTES: AppRoutePage[] = [
   'methodology',
   'login',
   'register',
+  'events',
+  'event-detail',
 ];
 
 /** Espace client — billetterie, services, profil */
 export const CLIENT_ROUTES: AppRoutePage[] = [
-  'events',
-  'event-detail',
   'checkout',
   'my-tickets',
   'services',

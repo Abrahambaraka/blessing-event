@@ -17,13 +17,36 @@ export async function fetchAllEvents(): Promise<Event[]> {
 }
 
 export async function fetchPublishedEvents(): Promise<Event[]> {
-  const all = await fetchAllEvents();
-  return all.filter((e) => e.status === 'published');
+  const { data, error } = await assertSupabase()
+    .from('be_events')
+    .select('data')
+    .eq('status', 'published')
+    .order('updated_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => r.data as Event);
 }
 
 export async function fetchEvent(idOrSlug: string): Promise<Event | null> {
-  const all = await fetchAllEvents();
-  return all.find((e) => e.id === idOrSlug || e.slug === idOrSlug) ?? null;
+  const client = assertSupabase();
+
+  const { data: bySlug, error: slugError } = await client
+    .from('be_events')
+    .select('data')
+    .eq('slug', idOrSlug)
+    .eq('status', 'published')
+    .maybeSingle();
+  if (slugError) throw new Error(slugError.message);
+  if (bySlug) return bySlug.data as Event;
+
+  const { data: byId, error: idError } = await client
+    .from('be_events')
+    .select('data')
+    .eq('id', idOrSlug)
+    .eq('status', 'published')
+    .maybeSingle();
+  if (idError) throw new Error(idError.message);
+  return byId ? (byId.data as Event) : null;
 }
 
 export async function saveEvent(event: Event): Promise<void> {

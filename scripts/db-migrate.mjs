@@ -56,7 +56,27 @@ try {
   }
   console.log('✓ Toutes les migrations appliquées.');
 } catch (err) {
-  console.error('✗ Erreur migration :', err instanceof Error ? err.message : err);
+  const message = err instanceof Error ? err.message : String(err);
+  console.error('✗ Erreur migration :', message);
+
+  if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT/i.test(message)) {
+    console.error(`
+→ Connexion PostgreSQL directe impossible (souvent IPv6 / réseau local).
+
+Solutions :
+  1. Supabase Dashboard → Project Settings → Database
+     → Connection string → onglet "Session pooler" (port 5432)
+     → Copiez l'URI et mettez-la dans .env.local comme SUPABASE_DB_URL
+
+     Format attendu :
+     postgresql://postgres.apxxzwmowjgpdhuecdou:[MOT_DE_PASSE]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+
+  2. Ou exécutez les fichiers SQL manuellement :
+     Supabase → SQL Editor → coller supabase/migrations/004_be_payments.sql
+     puis 005_remove_demo_events.sql → Run
+`);
+  }
+
   process.exit(1);
 } finally {
   await client.end();

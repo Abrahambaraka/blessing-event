@@ -1,0 +1,63 @@
+-- =============================================================================
+-- À exécuter dans Supabase Dashboard → SQL Editor → Run
+-- Si npm run db:migrate échoue (ENOTFOUND db.xxx.supabase.co)
+-- =============================================================================
+
+-- 004 — table paiements (ignore si déjà créée)
+create table if not exists public.be_payments (
+  id uuid primary key default gen_random_uuid(),
+  order_id text not null references public.be_orders(id) on delete cascade,
+  transaction_id text unique not null,
+  provider text not null check (provider in ('cinetpay', 'mock', 'free')),
+  status text not null default 'pending'
+    check (status in ('pending', 'completed', 'failed')),
+  amount numeric(12, 2),
+  currency text,
+  webhook_payload jsonb,
+  email_sent_at timestamptz,
+  completed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists be_payments_order_id_idx on public.be_payments(order_id);
+create index if not exists be_payments_status_idx on public.be_payments(status);
+create index if not exists be_payments_order_status_idx on public.be_payments(order_id, status);
+
+alter table public.be_payments enable row level security;
+
+drop policy if exists "be_payments_admin" on public.be_payments;
+create policy "be_payments_admin" on public.be_payments
+  for all to authenticated
+  using (public.be_is_admin())
+  with check (public.be_is_admin());
+
+-- 005 — supprimer événements mock
+delete from public.be_events
+where id in (
+  'evt-miss-rdc-2026',
+  'evt-gala-des-amours-2026',
+  'evt-ad-plenitudinem-2026',
+  'evt-concert-2026',
+  'evt-mariage-demo',
+  'evt-gala-2026',
+  'evt-summit-2026'
+);
+
+-- 006 — lecture publique des événements publiés
+drop policy if exists "be_events_read_published" on public.be_events;
+drop policy if exists "be_events_anon_read_published" on public.be_events;
+
+create policy "be_events_read_published" on public.be_events
+  for select
+  using (
+    status = 'published'
+    or (
+      auth.role() = 'authenticated'
+      and (public.be_is_admin() or public.be_is_staff())
+    )
+  );
+
+-- Vérification
+select count(*) as events_restants from public.be_events;
+select count(*) as table_payments from information_schema.tables
+where table_schema = 'public' and table_name = 'be_payments';

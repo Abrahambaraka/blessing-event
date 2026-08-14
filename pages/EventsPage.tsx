@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Ticket, SearchX } from 'lucide-react';
 import EventCard from '../components/ticketing/EventCard';
 import EventSearchBar from '../components/ticketing/EventSearchBar';
@@ -13,19 +13,34 @@ interface EventsPageProps {
 const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [filters, setFilters] = useState(DEFAULT_SEARCH_FILTERS);
 
-  useEffect(() => {
-    fetchPublishedEvents().then((data) => {
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await fetchPublishedEvents();
       setEvents(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger les événements.');
+      setEvents([]);
+    } finally {
       setLoading(false);
       requestAnimationFrame(() => {
         document.querySelectorAll('.event-card-item').forEach((el) => {
           el.classList.add('is-visible');
         });
       });
-    });
+    }
   }, []);
+
+  useEffect(() => {
+    loadEvents();
+    const onFocus = () => loadEvents();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [loadEvents]);
 
   const filteredResults = useMemo(
     () => searchEvents(events, filters),
@@ -56,6 +71,12 @@ const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg text-center">
+            {error}
+          </div>
+        )}
+
         {!loading && events.length > 0 && (
           <EventSearchBar
             events={events}
@@ -70,6 +91,7 @@ const EventsPage: React.FC<EventsPageProps> = ({ onNavigate }) => {
         ) : events.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-slate-500">Aucun événement disponible pour le moment.</p>
+            <p className="text-slate-400 text-sm mt-2">Seuls les événements <strong>publiés</strong> apparaissent ici.</p>
           </div>
         ) : filteredResults.length === 0 ? (
           <div className="text-center py-20 max-w-md mx-auto">
