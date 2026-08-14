@@ -1,8 +1,19 @@
 
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useAuth } from '../src/contexts/AuthContext';
+import { buildLoginRedirect } from '../src/lib/rbac';
 
 const Hero: React.FC = () => {
+  const { user } = useAuth();
+
+  const handleProtectedNav = (e: React.MouseEvent, path: string) => {
+    if (!user) {
+      e.preventDefault();
+      window.location.hash = buildLoginRedirect(path).replace('#', '');
+    }
+  };
+
   return (
     <section id="accueil" className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-navy">
       {/* Background with overlay */}
@@ -31,13 +42,15 @@ const Hero: React.FC = () => {
         <div className="reveal-fade-up flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 px-4" data-delay="300ms">
 
           <a
-            href="#contact"
+            href="#events"
+            onClick={(e) => handleProtectedNav(e, 'events')}
             className="w-full sm:w-auto px-8 md:px-10 py-3 md:py-4 bg-gold text-white font-semibold tracking-wide md:tracking-widest uppercase text-xs md:text-sm hover:bg-white hover:text-navy transition-custom text-center"
           >
-            Contactez L'Excellence
+            Voir les Événements
           </a>
           <a
             href="#services"
+            onClick={(e) => handleProtectedNav(e, 'services')}
             className="w-full sm:w-auto px-8 md:px-10 py-3 md:py-4 border border-white/50 text-white font-semibold tracking-wide md:tracking-widest uppercase text-xs md:text-sm hover:bg-white/10 transition-custom text-center"
           >
             Nos Services

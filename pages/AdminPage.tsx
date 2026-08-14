@@ -1,32 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, Eye, EyeOff, Lock } from 'lucide-react';
+import { BarChart3, Eye, EyeOff } from 'lucide-react';
 import { fetchAllEvents, getEventStats, updateEventStatus } from '../src/services/ticketingService';
 import { formatPrice } from '../src/lib/fees';
+import { useAuth } from '../src/contexts/AuthContext';
 import type { Event } from '../src/types/ticketing';
 
-const ADMIN_PIN = '2026';
-
 const AdminPage: React.FC = () => {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [pin, setPin] = useState('');
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (authenticated) {
-      fetchAllEvents().then(setEvents);
-    }
-  }, [authenticated]);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pin === ADMIN_PIN) {
-      setAuthenticated(true);
-      setError('');
-    } else {
-      setError('Code incorrect');
-    }
-  };
+    fetchAllEvents().then(setEvents);
+  }, []);
 
   const toggleStatus = async (event: Event) => {
     const next = event.status === 'published' ? 'draft' : 'published';
@@ -34,39 +19,16 @@ const AdminPage: React.FC = () => {
     setEvents((prev) => prev.map((e) => (e.id === event.id ? { ...e, status: next } : e)));
   };
 
-  if (!authenticated) {
-    return (
-      <div className="pt-24 md:pt-32 pb-16 min-h-screen bg-slate-50 flex items-center justify-center">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl border border-slate-100 shadow-sm max-w-sm w-full mx-4">
-          <div className="text-center mb-6">
-            <Lock size={32} className="text-navy mx-auto mb-3" />
-            <h1 className="font-serif text-2xl text-navy">Administration</h1>
-            <p className="text-sm text-slate-500 mt-1">Accès réservé Blessing Event</p>
-          </div>
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            placeholder="Code d'accès"
-            className="w-full px-4 py-3 border border-slate-200 rounded-lg mb-4 focus:border-gold focus:outline-none text-center font-mono"
-          />
-          {error && <p className="text-red-600 text-sm text-center mb-4">{error}</p>}
-          <button type="submit" className="w-full py-3 bg-navy text-white text-sm font-bold uppercase tracking-widest rounded-lg">
-            Connexion
-          </button>
-          <p className="text-[10px] text-slate-400 text-center mt-4">Démo : code {ADMIN_PIN}</p>
-        </form>
-      </div>
-    );
-  }
-
   return (
     <div className="pt-24 md:pt-28 pb-16 min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
+            <p className="text-gold text-xs uppercase tracking-[0.2em] font-bold mb-1">Back-Office Admin</p>
             <h1 className="font-serif text-2xl md:text-3xl text-navy">Tableau de bord</h1>
-            <p className="text-sm text-slate-500">Gestion des événements et billetterie</p>
+            <p className="text-sm text-slate-500">
+              Connecté en tant que {user?.name} — Gestion événements, billetterie et votes
+            </p>
           </div>
           <a
             href="#checkin"
