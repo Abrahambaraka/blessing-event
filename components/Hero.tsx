@@ -6,13 +6,18 @@ const Hero: React.FC = () => {
   return (
     <section id="accueil" className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-navy">
       {/* Background with overlay */}
-      <div className="absolute inset-0 z-0 hover-zoom-container">
-        <img
-          src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=2000"
-          alt="Luxury Event Background"
-          className="w-full h-full object-cover opacity-40 hover-zoom-img"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-navy/50 via-transparent to-navy/80 hover-zoom-overlay"></div>
+      <div className="absolute inset-0 z-0">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover opacity-40"
+          aria-hidden="true"
+        >
+          <source src="/videos/BE001.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-navy/50 via-transparent to-navy/80"></div>
       </div>
 
       <div className="relative z-10 container mx-auto px-4 md:px-6 text-center text-white">
