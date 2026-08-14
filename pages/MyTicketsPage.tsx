@@ -1,23 +1,54 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, Ticket } from 'lucide-react';
 import TicketDisplay from '../components/ticketing/TicketDisplay';
-import { fetchTicketsByEmail } from '../src/services/ticketingService';
+import { useAuth } from '../src/contexts/AuthContext';
+import { fetchMyTickets, fetchTicketsByEmail } from '../src/services/ticketingService';
+import { shouldUseTicketingApi } from '../src/services/ticketingApiService';
 import type { Ticket as TicketType } from '../src/types/ticketing';
 
 const MyTicketsPage: React.FC = () => {
+  const { user, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState(() => localStorage.getItem('be_buyer_email') ?? '');
   const [tickets, setTickets] = useState<TicketType[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    setEmail(user.email);
+    setLoading(true);
+    setError('');
+
+    fetchMyTickets(user.email)
+      .then((results) => {
+        setTickets(results);
+        setSearched(true);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Impossible de charger vos billets.');
+      })
+      .finally(() => setLoading(false));
+  }, [authLoading, user]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setLoading(true);
+    setError('');
     localStorage.setItem('be_buyer_email', email.trim());
-    const results = await fetchTicketsByEmail(email.trim());
-    setTickets(results);
-    setSearched(true);
+
+    try {
+      const results =
+        user && shouldUseTicketingApi()
+          ? await fetchMyTickets(email.trim())
+          : await fetchTicketsByEmail(email.trim());
+      setTickets(results);
+      setSearched(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Recherche impossible.');
+    }
     setLoading(false);
   };
 
@@ -29,31 +60,45 @@ const MyTicketsPage: React.FC = () => {
             <Ticket size={28} className="text-navy" />
           </div>
           <h1 className="font-serif text-3xl text-navy mb-2">Mes billets</h1>
-          <p className="text-slate-500 text-sm">Retrouvez vos e-billets avec l'email utilisé lors de l'achat</p>
+          <p className="text-slate-500 text-sm">
+            {user
+              ? 'Vos billets sont chargés automatiquement depuis votre compte.'
+              : 'Retrouvez vos e-billets avec l\'email utilisé lors de l\'achat'}
+          </p>
         </div>
 
-        <form onSubmit={handleSearch} className="flex gap-2 mb-10">
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="votre@email.com"
-              className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:border-gold focus:outline-none"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-3 bg-navy text-white text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-navy/90 disabled:opacity-50"
-          >
-            {loading ? '...' : 'Chercher'}
-          </button>
-        </form>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>
+        )}
 
-        {searched && tickets.length === 0 && (
+        {!user && (
+          <form onSubmit={handleSearch} className="flex gap-2 mb-10">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="votre@email.com"
+                className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:border-gold focus:outline-none"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-navy text-white text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-navy/90 disabled:opacity-50"
+            >
+              {loading ? '...' : 'Chercher'}
+            </button>
+          </form>
+        )}
+
+        {user && loading && !searched && (
+          <p className="text-center text-slate-400 mb-10">Chargement de vos billets...</p>
+        )}
+
+        {searched && tickets.length === 0 && !loading && (
           <p className="text-center text-slate-500">Aucun billet trouvé pour cet email.</p>
         )}
 

@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const transactionId = `${orderId}-${Date.now()}`;
+    const transactionId = `${orderId}__${Date.now()}`;
     const payload = {
       apikey: apiKey,
       site_id: siteId,

@@ -5,7 +5,25 @@ import { uniqueSlug } from '../lib/slugify';
 import { isSupabaseEnabled } from '../lib/supabase';
 import * as storage from '../lib/storage';
 import * as sb from './supabaseTicketingService';
+import {
+  apiCompleteOrder,
+  apiCreateOrder,
+  apiFetchMyTickets,
+  shouldUseTicketingApi,
+} from './ticketingApiService';
 import { DEMO_EVENTS } from '../data/demoEvents';
+
+async function withApiFallback<T>(apiFn: () => Promise<T>, fallbackFn: () => Promise<T>): Promise<T> {
+  try {
+    return await apiFn();
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.warn('[ticketing] API indisponible — fallback Supabase direct', err);
+      return fallbackFn();
+    }
+    throw err;
+  }
+}
 
 const ORDER_EXPIRY_MINUTES = 15;
 const DEMO_IDS = new Set(DEMO_EVENTS.map((e) => e.id));
@@ -138,6 +156,21 @@ export async function createOrder(
   buyer: { name: string; email: string },
   attendees: Attendee[]
 ): Promise<Order> {
+  if (shouldUseTicketingApi()) {
+    return withApiFallback(
+      () => apiCreateOrder(event, items, buyer, attendees),
+      () => createOrderLocal(event, items, buyer, attendees)
+    );
+  }
+  return createOrderLocal(event, items, buyer, attendees);
+}
+
+async function createOrderLocal(
+  event: Event,
+  items: CartItem[],
+  buyer: { name: string; email: string },
+  attendees: Attendee[]
+): Promise<Order> {
   const feeItems = items.map((item) => {
     const tt = event.ticketTypes.find((t) => t.id === item.ticketTypeId)!;
     return {
@@ -190,6 +223,16 @@ export async function createOrder(
 }
 
 export async function completePayment(orderId: string): Promise<{ order: Order; tickets: Ticket[] }> {
+  if (shouldUseTicketingApi()) {
+    return withApiFallback(
+      () => apiCompleteOrder(orderId),
+      () => completePaymentLocal(orderId)
+    );
+  }
+  return completePaymentLocal(orderId);
+}
+
+async function completePaymentLocal(orderId: string): Promise<{ order: Order; tickets: Ticket[] }> {
   const order = isSupabaseEnabled
     ? await sb.getOrderById(orderId)
     : storage.getOrderById(orderId);
@@ -264,6 +307,22 @@ async function finalizeOrder(order: Order, event: Event, attendees: Attendee[]):
 export async function fetchTicketsByEmail(email: string): Promise<Ticket[]> {
   if (isSupabaseEnabled) return sb.getTicketsByEmail(email);
   return storage.getTicketsByEmail(email);
+}
+
+/** Billets du compte connecté (JWT) — préféré en mode Supabase */
+export async function fetchMyTickets(fallbackEmail?: string): Promise<Ticket[]> {
+  if (shouldUseTicketingApi()) {
+    try {
+      return await apiFetchMyTickets();
+    } catch (err) {
+      if (import.meta.env.DEV && fallbackEmail) {
+        return sb.getTicketsByEmail(fallbackEmail);
+      }
+      throw err;
+    }
+  }
+  if (fallbackEmail) return fetchTicketsByEmail(fallbackEmail);
+  return [];
 }
 
 export async function fetchOrder(orderId: string): Promise<Order | null> {

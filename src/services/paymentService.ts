@@ -38,9 +38,13 @@ export async function initiatePayment(order: Order): Promise<PaymentInitResult> 
 
 /** Finalise après retour paiement ou mode mock */
 export async function confirmMockPayment(orderId: string): Promise<void> {
+  const token = await getAccessToken();
   const response = await fetch('/api/payments/confirm', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ orderId }),
   });
   if (!response.ok) {
