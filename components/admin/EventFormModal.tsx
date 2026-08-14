@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ImagePlus, X, Plus, Trash2 } from 'lucide-react';
 import type { Event, Currency, FeeMode, EventStatus } from '../types/ticketing';
 import type { CreateEventInput } from '../services/ticketingService';
+import { canUploadEventImages, uploadEventImage } from '../../src/services/imageUploadService';
 
 interface EventFormModalProps {
   event?: Event | null;
@@ -22,6 +23,10 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
   const [venue, setVenue] = useState('');
   const [city, setCity] = useState('Lubumbashi');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [capacity, setCapacity] = useState(200);
   const [currency, setCurrency] = useState<Currency>('USD');
   const [feeMode, setFeeMode] = useState<FeeMode>('buyer');
@@ -30,13 +35,21 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
   const [ticketTypes, setTicketTypes] = useState([emptyTicket()]);
 
   useEffect(() => {
-    if (!event) return;
+    if (!event) {
+      setImageUrl('');
+      setImagePreview('');
+      setImageFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     setTitle(event.title);
     setDescription(event.description);
     setDate(event.date.slice(0, 16));
     setVenue(event.venue);
     setCity(event.city);
     setImageUrl(event.imageUrl);
+    setImagePreview(event.imageUrl);
+    setImageFile(null);
     setCapacity(event.capacity);
     setCurrency(event.currency);
     setFeeMode(event.feeMode);
@@ -54,6 +67,27 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
     );
   }, [event]);
 
+  useEffect(() => {
+    if (!imageFile) return;
+    const objectUrl = URL.createObjectURL(imageFile);
+    setImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [imageFile]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError('');
+    setImageFile(file);
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setImageUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const updateTicket = (index: number, field: string, value: string | number) => {
     setTicketTypes((prev) => {
       const next = [...prev];
@@ -68,13 +102,24 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
     setLoading(true);
 
     try {
+      let finalImageUrl = imageUrl || '/logo.png';
+
+      if (imageFile) {
+        if (!canUploadEventImages()) {
+          throw new Error('Upload indisponible — configurez Supabase ou utilisez une image existante.');
+        }
+        setUploadingImage(true);
+        finalImageUrl = await uploadEventImage(imageFile);
+        setUploadingImage(false);
+      }
+
       const payload = {
         title,
         description,
         date: new Date(date).toISOString(),
         venue,
         city,
-        imageUrl: imageUrl || '/logo.png',
+        imageUrl: finalImageUrl,
         capacity,
         currency,
         feeMode,
@@ -110,6 +155,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.');
     } finally {
+      setUploadingImage(false);
       setLoading(false);
     }
   };
@@ -169,8 +215,52 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
               </select>
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-xs uppercase tracking-widest font-bold text-navy mb-1">URL affiche / image</label>
-              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="/mon-evenement.png" className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:border-gold outline-none" />
+              <label className="block text-xs uppercase tracking-widest font-bold text-navy mb-2">Affiche / image</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="w-full sm:w-40 h-40 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center shrink-0">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Aperçu affiche" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center text-slate-400 px-3">
+                      <ImagePlus size={28} className="mx-auto mb-2 opacity-60" />
+                      <p className="text-xs">Aucune image</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 flex flex-col gap-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage || loading}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-navy text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-navy/90 disabled:opacity-50"
+                  >
+                    <ImagePlus size={16} />
+                    {imageFile ? 'Changer l\'image' : 'Choisir une image'}
+                  </button>
+                  {(imagePreview || imageFile) && (
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      disabled={uploadingImage || loading}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-widest rounded-lg hover:border-red-200 hover:text-red-600 disabled:opacity-50"
+                    >
+                      Retirer l'image
+                    </button>
+                  )}
+                  <p className="text-xs text-slate-400">
+                    JPG, PNG, WebP ou GIF — max. 5 Mo
+                    {!canUploadEventImages() && ' (Supabase requis pour l\'upload)'}
+                  </p>
+                  {uploadingImage && <p className="text-xs text-gold font-medium">Envoi de l'image en cours…</p>}
+                </div>
+              </div>
             </div>
             <div>
               <label className="block text-xs uppercase tracking-widest font-bold text-navy mb-1">Prix du vote (optionnel)</label>
@@ -214,8 +304,8 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
             <button type="button" onClick={onClose} className="flex-1 py-3 border border-slate-200 text-sm font-bold uppercase tracking-widest rounded-lg">
               Annuler
             </button>
-            <button type="submit" disabled={loading} className="flex-1 py-3 bg-navy text-white text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-gold disabled:opacity-50">
-              {loading ? 'Enregistrement…' : isEdit ? 'Mettre à jour' : 'Créer l\'événement'}
+            <button type="submit" disabled={loading || uploadingImage} className="flex-1 py-3 bg-navy text-white text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-gold disabled:opacity-50">
+              {loading || uploadingImage ? 'Enregistrement…' : isEdit ? 'Mettre à jour' : 'Créer l\'événement'}
             </button>
           </div>
         </form>
