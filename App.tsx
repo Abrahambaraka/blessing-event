@@ -56,7 +56,7 @@ function routeToPageId(route: Route): string {
   if (route.page === 'event-detail') return 'events';
   if (route.page === 'checkout') return 'events';
   if (route.page === 'dashboard') return 'dashboard';
-  if (route.page === 'login' || route.page === 'register') return 'home';
+  if (route.page === 'login' || route.page === 'register') return route.page;
   return route.page;
 }
 

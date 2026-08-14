@@ -107,10 +107,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ hash, onNavigate }) => {
                 Créer un compte
               </a>
             </p>
-
-            <p className="text-[10px] text-slate-400 text-center border-t border-slate-100 pt-4">
-              Admin démo : admin@blessing-event.com / Blessing2026!
-            </p>
           </form>
         </div>
       </div>
