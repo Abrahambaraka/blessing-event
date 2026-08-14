@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, CreditCard, CheckCircle, Mail } from 'lucide-react';
 import TicketDisplay from '../components/ticketing/TicketDisplay';
 import { fetchEvent, createOrder, completePayment } from '../src/services/ticketingService';
+import { initiatePayment } from '../src/services/paymentService';
 import { formatPrice } from '../src/lib/fees';
 import type { Attendee, CartItem, Event, Order, Ticket } from '../src/types/ticketing';
 
@@ -110,7 +111,14 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
     setError('');
 
     try {
-      await new Promise((r) => setTimeout(r, 1200));
+      const payment = await initiatePayment(order);
+
+      if (payment.mode === 'cinetpay' && payment.paymentUrl) {
+        window.location.href = payment.paymentUrl;
+        return;
+      }
+
+      await new Promise((r) => setTimeout(r, 800));
       const { order: paidOrder, tickets: issued } = await completePayment(order.id);
       setOrder(paidOrder);
       setTickets(issued);
@@ -256,7 +264,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
 
               <p className="text-xs text-slate-400 mb-4 flex items-center gap-2">
                 <CreditCard size={14} />
-                Mode démo — intégration paiement via API à brancher.
+                Mobile Money / Carte via CinetPay (ou mode démo si non configuré).
               </p>
 
               <button
