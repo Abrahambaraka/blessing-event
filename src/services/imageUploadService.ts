@@ -1,15 +1,42 @@
-import { supabase, isSupabaseEnabled } from '../lib/supabase';
+import { isSupabaseEnabled } from '../lib/supabase';
+import { getAccessToken } from './authService';
 
-const BUCKET = 'event-images';
-const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_SIZE = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 export function canUploadEventImages(): boolean {
-  return isSupabaseEnabled && supabase !== null;
+  return isSupabaseEnabled;
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(',')[1] ?? '';
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error('Lecture du fichier impossible.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function ensureBucket(token: string): Promise<void> {
+  const response = await fetch('/api/storage/ensure-event-images', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.error ?? 'Impossible de préparer le stockage images.');
+  }
 }
 
 export async function uploadEventImage(file: File): Promise<string> {
-  if (!supabase) {
+  if (!isSupabaseEnabled) {
     throw new Error('Upload indisponible — Supabase non configuré.');
   }
 
@@ -18,25 +45,32 @@ export async function uploadEventImage(file: File): Promise<string> {
   }
 
   if (file.size > MAX_SIZE) {
-    throw new Error('Image trop volumineuse (maximum 5 Mo).');
+    throw new Error('Image trop volumineuse (maximum 4 Mo).');
   }
 
-  const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-  const path = `events/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+  const token = await getAccessToken();
+  if (!token) throw new Error('Session expirée — reconnectez-vous.');
 
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    cacheControl: '3600',
-    upsert: false,
-    contentType: file.type,
+  await ensureBucket(token);
+
+  const dataBase64 = await fileToBase64(file);
+  const response = await fetch('/api/admin/upload-image', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      fileName: file.name,
+      contentType: file.type,
+      dataBase64,
+    }),
   });
 
-  if (error) {
-    if (/bucket not found/i.test(error.message)) {
-      throw new Error('Bucket event-images manquant — exécutez la migration 007 sur Supabase.');
-    }
-    throw new Error(error.message);
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error ?? `Upload échoué (${response.status}).`);
   }
 
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  return data.publicUrl as string;
 }
