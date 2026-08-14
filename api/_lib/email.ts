@@ -1,5 +1,6 @@
 import type { Order, Ticket } from '../../src/types/ticketing';
 import { formatPrice } from '../../src/lib/fees';
+import { SITE_CONTACT } from '../../src/constants/contact';
 
 function siteUrl(): string {
   return (
@@ -9,7 +10,19 @@ function siteUrl(): string {
 }
 
 function fromAddress(): string {
-  return process.env.EMAIL_FROM ?? 'Blessing Event <tickets@blessing-event.com>';
+  return process.env.EMAIL_FROM ?? `Blessing Event <${SITE_CONTACT.email}>`;
+}
+
+function notificationEmail(): string {
+  return process.env.NOTIFICATION_EMAIL ?? SITE_CONTACT.email;
+}
+
+function recipients(order: Order): { to: string[]; bcc?: string[] } {
+  const admin = notificationEmail().trim().toLowerCase();
+  const buyer = order.buyerEmail.trim().toLowerCase();
+  const to = buyer === admin ? [admin] : [buyer];
+  const bcc = buyer === admin ? undefined : [admin];
+  return { to, bcc };
 }
 
 function formatEventDate(iso: string): string {
@@ -137,6 +150,8 @@ export async function sendOrderConfirmationEmail(order: Order, tickets: Ticket[]
     return false;
   }
 
+  const { to, bcc } = recipients(order);
+
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -145,7 +160,8 @@ export async function sendOrderConfirmationEmail(order: Order, tickets: Ticket[]
     },
     body: JSON.stringify({
       from: fromAddress(),
-      to: [order.buyerEmail],
+      to,
+      ...(bcc ? { bcc } : {}),
       subject: `Vos billets — ${order.eventTitle}`,
       html: buildHtml(order, tickets),
       text: buildText(order, tickets),
