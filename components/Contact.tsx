@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin } from 'lucide-react';
+import { SITE_CONTACT } from '../src/constants/contact';
 
 const Contact: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +37,7 @@ Envoyé depuis le site Blessing Event
 
     try {
       // Utiliser mailto comme solution temporaire
-      const mailtoLink = `mailto:blessingevent001@gmail.com?subject=Demande de devis - ${eventType}&body=${encodeURIComponent(emailBody)}`;
+      const mailtoLink = `mailto:${SITE_CONTACT.email}?subject=Demande de devis - ${eventType}&body=${encodeURIComponent(emailBody)}`;
       window.location.href = mailtoLink;
       
       setSubmitStatus('success');
@@ -65,16 +66,17 @@ Envoyé depuis le site Blessing Event
                   <div className="bg-white/10 p-2 md:p-3 rounded-lg text-gold flex-shrink-0"><MapPin size={20} className="md:w-6 md:h-6" /></div>
                   <div>
                     <p className="text-[10px] md:text-xs uppercase tracking-widest text-gold font-bold mb-1">Bureau</p>
-                    <p className="text-xs md:text-sm">Q/CRAA; Av. kaposo N°01; Lubumbashi, Haut-Katanga; RDC</p>
+                    <p className="text-xs md:text-sm">{SITE_CONTACT.address}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-3 md:space-x-4">
                   <div className="bg-white/10 p-2 md:p-3 rounded-lg text-gold flex-shrink-0"><Phone size={20} className="md:w-6 md:h-6" /></div>
                   <div>
-                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-gold font-bold mb-1">Lignes Directes</p>
-                    <p className="text-xs md:text-sm">+243 83 86 48 799</p>
-                    <p className="text-xs md:text-sm">+243 80 10 52 054</p>
+                    <p className="text-[10px] md:text-xs uppercase tracking-widest text-gold font-bold mb-1">Ligne Directe</p>
+                    <a href={SITE_CONTACT.phoneTel} className="text-xs md:text-sm hover:text-gold transition-colors">
+                      {SITE_CONTACT.phone}
+                    </a>
                   </div>
                 </div>
 
@@ -82,7 +84,9 @@ Envoyé depuis le site Blessing Event
                   <div className="bg-white/10 p-2 md:p-3 rounded-lg text-gold flex-shrink-0"><Mail size={20} className="md:w-6 md:h-6" /></div>
                   <div>
                     <p className="text-[10px] md:text-xs uppercase tracking-widest text-gold font-bold mb-1">Email</p>
-                    <p className="text-xs md:text-sm break-all">blessingevent001@gmail.com</p>
+                    <a href={`mailto:${SITE_CONTACT.email}`} className="text-xs md:text-sm break-all hover:text-gold transition-colors">
+                      {SITE_CONTACT.email}
+                    </a>
                   </div>
                 </div>
               </div>

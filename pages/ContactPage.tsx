@@ -2,6 +2,7 @@
 import React from 'react';
 import Contact from '../components/Contact';
 import { HelpCircle, Clock, MapPin, Phone, Mail } from 'lucide-react';
+import { SITE_CONTACT } from '../src/constants/contact';
 
 const ContactPage: React.FC = () => {
   const faqs = [
@@ -40,14 +41,25 @@ const ContactPage: React.FC = () => {
                               <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center shadow-md text-gold flex-shrink-0"><MapPin size={18} className="md:w-5 md:h-5" /></div>
                               <div>
                                   <p className="font-bold text-navy text-sm md:text-base">Bureau Local</p>
-                                  <p className="text-slate-500 text-xs md:text-sm">Av. Kaposo N°01, Lubumbashi</p>
+                                  <p className="text-slate-500 text-xs md:text-sm">{SITE_CONTACT.addressShort}</p>
                               </div>
                           </div>
                           <div className="flex items-center space-x-3 md:space-x-4">
                               <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center shadow-md text-gold flex-shrink-0"><Phone size={18} className="md:w-5 md:h-5" /></div>
                               <div>
                                   <p className="font-bold text-navy text-sm md:text-base">Téléphone</p>
-                                  <p className="text-slate-500 text-xs md:text-sm">+243 83 86 48 799</p>
+                                  <a href={SITE_CONTACT.phoneTel} className="text-slate-500 text-xs md:text-sm hover:text-gold transition-colors">
+                                    {SITE_CONTACT.phone}
+                                  </a>
+                              </div>
+                          </div>
+                          <div className="flex items-center space-x-3 md:space-x-4">
+                              <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center shadow-md text-gold flex-shrink-0"><Mail size={18} className="md:w-5 md:h-5" /></div>
+                              <div>
+                                  <p className="font-bold text-navy text-sm md:text-base">Email</p>
+                                  <a href={`mailto:${SITE_CONTACT.email}`} className="text-slate-500 text-xs md:text-sm hover:text-gold transition-colors break-all">
+                                    {SITE_CONTACT.email}
+                                  </a>
                               </div>
                           </div>
                       </div>

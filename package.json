@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy",
+    "deploy:vercel": "npm run build && vercel deploy --prod",
     "firebase:init": "firebase init",
     "firebase:serve": "npm run build && firebase serve"
   },
