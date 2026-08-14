@@ -38,7 +38,32 @@ try {
   console.log('AUTH_USERS:', JSON.stringify(authUsers, null, 2));
 
   const { rows: eventCount } = await client.query('SELECT count(*)::int AS n FROM public.be_events');
-  console.log('EVENTS_SEEDED:', eventCount[0].n);
+  console.log('EVENTS_TOTAL:', eventCount[0].n);
+
+  const DEMO_IDS = [
+    'evt-miss-rdc-2026',
+    'evt-gala-des-amours-2026',
+    'evt-ad-plenitudinem-2026',
+    'evt-concert-2026',
+    'evt-mariage-demo',
+    'evt-gala-2026',
+    'evt-summit-2026',
+  ];
+  const { rows: demoLeft } = await client.query(
+    'SELECT id, slug, status FROM public.be_events WHERE id = ANY($1)',
+    [DEMO_IDS]
+  );
+  console.log('DEMO_EVENTS_RESTANTS:', demoLeft.length === 0 ? 'aucun (ok)' : JSON.stringify(demoLeft));
+
+  const { rows: published } = await client.query(
+    "SELECT id, slug, data->>'title' AS title FROM public.be_events WHERE status = 'published' ORDER BY updated_at DESC"
+  );
+  console.log('EVENTS_PUBLIES:', JSON.stringify(published));
+
+  const { rows: buckets } = await client.query(
+    "SELECT id, public FROM storage.buckets WHERE id = 'event-images'"
+  );
+  console.log('STORAGE_EVENT_IMAGES:', buckets.length ? 'ok' : 'MANQUANT — exécuter 007');
 
   const { rows: paymentCount } = await client.query(
     "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'be_payments'"

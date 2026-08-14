@@ -12,6 +12,12 @@ import {
   shouldUseTicketingApi,
 } from './ticketingApiService';
 import { fetchEventFromApi, fetchPublishedEventsFromApi } from './eventsApiService';
+import {
+  adminFetchAllEvents,
+  adminPersistEvent,
+  adminRemoveEvent,
+  useAdminEventsApi,
+} from './adminEventsApiService';
 
 const ORDER_EXPIRY_MINUTES = 15;
 
@@ -43,7 +49,10 @@ export interface CreateEventInput {
 }
 
 async function getEventsList(): Promise<Event[]> {
-  return isSupabaseEnabled ? sb.fetchAllEvents() : storage.getEvents();
+  if (isSupabaseEnabled) {
+    return useAdminEventsApi() ? adminFetchAllEvents() : sb.fetchAllEvents();
+  }
+  return storage.getEvents();
 }
 
 async function getEventById(idOrSlug: string): Promise<Event | undefined | null> {
@@ -55,11 +64,12 @@ async function getEventById(idOrSlug: string): Promise<Event | undefined | null>
 }
 
 async function persistEvent(event: Event): Promise<void> {
-  if (isSupabaseEnabled) await sb.saveEvent(event);
-  else {
-    const events = storage.getEvents();
-    storage.saveEvents(events.map((e) => (e.id === event.id ? event : e)));
+  if (isSupabaseEnabled) {
+    await adminPersistEvent(event);
+    return;
   }
+  const events = storage.getEvents();
+  storage.saveEvents(events.map((e) => (e.id === event.id ? event : e)));
 }
 
 async function persistOrder(order: Order): Promise<void> {
@@ -133,8 +143,9 @@ export async function createEvent(input: CreateEventInput): Promise<Event> {
     updatedAt: now,
   };
 
-  if (isSupabaseEnabled) await sb.saveEvent(event);
-  else {
+  if (isSupabaseEnabled) {
+    await adminPersistEvent(event);
+  } else {
     const events = storage.getEvents();
     events.push(event);
     storage.saveEvents(events);
@@ -145,7 +156,7 @@ export async function createEvent(input: CreateEventInput): Promise<Event> {
 
 export async function deleteEvent(eventId: string): Promise<void> {
   if (isSupabaseEnabled) {
-    await sb.deleteEvent(eventId);
+    await adminRemoveEvent(eventId);
     return;
   }
   storage.saveEvents(storage.getEvents().filter((e) => e.id !== eventId));
@@ -367,14 +378,15 @@ export async function checkInTicket(
 
 export async function saveEvent(event: Event): Promise<void> {
   event.updatedAt = new Date().toISOString();
-  if (isSupabaseEnabled) await sb.saveEvent(event);
-  else {
-    const events = storage.getEvents();
-    const idx = events.findIndex((e) => e.id === event.id);
-    if (idx >= 0) events[idx] = event;
-    else events.push(event);
-    storage.saveEvents(events);
+  if (isSupabaseEnabled) {
+    await adminPersistEvent(event);
+    return;
   }
+  const events = storage.getEvents();
+  const idx = events.findIndex((e) => e.id === event.id);
+  if (idx >= 0) events[idx] = event;
+  else events.push(event);
+  storage.saveEvents(events);
 }
 
 export async function updateEventStatus(eventId: string, status: Event['status']): Promise<void> {

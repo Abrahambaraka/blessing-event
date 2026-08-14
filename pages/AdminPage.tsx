@@ -34,6 +34,9 @@ const AdminPage: React.FC = () => {
 
   useEffect(() => {
     loadEvents();
+    const onFocus = () => loadEvents();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, [loadEvents]);
 
   const toggleStatus = async (event: Event) => {
@@ -69,7 +72,7 @@ const AdminPage: React.FC = () => {
             <p className="text-gold text-xs uppercase tracking-[0.2em] font-bold mb-1">Back-Office Admin</p>
             <h1 className="font-serif text-2xl md:text-3xl text-navy">Gestion des événements</h1>
             <p className="text-sm text-slate-500">
-              {user?.name} · Données : {dataMode() === 'supabase' ? 'Supabase' : 'Local (démo)'}
+              {user?.name} · Base de données : {dataMode() === 'supabase' ? 'Supabase (live)' : 'Local — configurez VITE_SUPABASE_*'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

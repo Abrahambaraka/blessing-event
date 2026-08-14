@@ -18,6 +18,7 @@ import RegisterPage from './pages/RegisterPage';
 import ClientDashboardPage from './pages/ClientDashboardPage';
 import ProtectedRoute from './src/components/auth/ProtectedRoute';
 import { useScrollReveal } from './src/hooks/useScrollReveal';
+import { initProductionDataMode } from './src/lib/dataMode';
 import type { AppRoutePage } from './src/types/auth';
 
 type Route =
@@ -76,6 +77,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    initProductionDataMode();
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange();
     return () => window.removeEventListener('hashchange', handleHashChange);
