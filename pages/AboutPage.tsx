@@ -30,8 +30,8 @@ const AboutPage: React.FC = () => {
               </p>
             </div>
             <div className="reveal-fade-up relative" data-delay="450ms">
-                <div className="hover-zoom-container rounded-lg shadow-2xl w-full h-auto">
-                    <img src="https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1000" className="w-full h-auto hover-zoom-img" alt="Event setup" />
+                <div className="hover-zoom-container rounded-lg shadow-2xl w-full h-auto overflow-hidden">
+                    <img src="/protocole-accueil.jpg" className="w-full h-auto object-cover hover-zoom-img" alt="Hôtesse Blessing Event en service protocolaire" />
                 </div>
                 <div className="absolute -bottom-4 -left-4 md:-bottom-8 md:-left-8 bg-gold p-4 md:p-6 text-white hidden sm:block z-10">
                     <p className="text-2xl md:text-4xl font-bold font-serif">#1</p>
