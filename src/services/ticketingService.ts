@@ -11,7 +11,8 @@ import {
   apiFetchMyTickets,
   shouldUseTicketingApi,
 } from './ticketingApiService';
-import { DEMO_EVENTS } from '../data/demoEvents';
+
+const ORDER_EXPIRY_MINUTES = 15;
 
 async function withApiFallback<T>(apiFn: () => Promise<T>, fallbackFn: () => Promise<T>): Promise<T> {
   try {
@@ -24,9 +25,6 @@ async function withApiFallback<T>(apiFn: () => Promise<T>, fallbackFn: () => Pro
     throw err;
   }
 }
-
-const ORDER_EXPIRY_MINUTES = 15;
-const DEMO_IDS = new Set(DEMO_EVENTS.map((e) => e.id));
 
 export interface CreateEventInput {
   title: string;
@@ -140,9 +138,6 @@ export async function createEvent(input: CreateEventInput): Promise<Event> {
 }
 
 export async function deleteEvent(eventId: string): Promise<void> {
-  if (DEMO_IDS.has(eventId)) {
-    throw new Error('Les événements démo intégrés ne peuvent pas être supprimés.');
-  }
   if (isSupabaseEnabled) {
     await sb.deleteEvent(eventId);
     return;

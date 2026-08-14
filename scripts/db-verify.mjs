@@ -5,7 +5,7 @@ const client = new pg.Client({
   ssl: { rejectUnauthorized: false },
 });
 
-const EXPECTED_TABLES = ['profiles', 'be_events', 'be_orders', 'be_tickets', 'be_checkins', 'be_votes'];
+const EXPECTED_TABLES = ['profiles', 'be_events', 'be_orders', 'be_tickets', 'be_checkins', 'be_votes', 'be_payments'];
 
 try {
   await client.connect();
@@ -39,6 +39,18 @@ try {
 
   const { rows: eventCount } = await client.query('SELECT count(*)::int AS n FROM public.be_events');
   console.log('EVENTS_SEEDED:', eventCount[0].n);
+
+  const { rows: paymentCount } = await client.query(
+    "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'be_payments'"
+  );
+  console.log('BE_PAYMENTS:', paymentCount[0].n === 1 ? 'ok' : 'MANQUANTE — exécuter npm run db:migrate');
+
+  if (paymentCount[0].n === 1) {
+    const { rows: payments } = await client.query(
+      'SELECT id, order_id, transaction_id, provider, status, email_sent_at, created_at FROM public.be_payments ORDER BY created_at DESC LIMIT 5'
+    );
+    console.log('DERNIERS_PAIEMENTS:', JSON.stringify(payments, null, 2));
+  }
 
   const admin = profiles.find((p) => p.role === 'super_admin');
   console.log('ADMIN_OK:', admin ? `oui (${admin.email})` : 'non — exécuter 002_promote_admin.sql');

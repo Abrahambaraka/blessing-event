@@ -1,32 +1,12 @@
 import type { CheckInRecord, Event, Order, Ticket } from '../types/ticketing';
-import { DEMO_EVENTS } from '../data/demoEvents';
 import { supabase, isSupabaseEnabled } from '../lib/supabase';
-
-const DEMO_IDS = new Set(DEMO_EVENTS.map((e) => e.id));
 
 function assertSupabase() {
   if (!supabase) throw new Error('Supabase non configuré.');
   return supabase;
 }
 
-async function seedDemoIfEmpty(): Promise<void> {
-  const client = assertSupabase();
-  const { count } = await client.from('be_events').select('*', { count: 'exact', head: true });
-  if (count && count > 0) return;
-
-  const rows = DEMO_EVENTS.map((event) => ({
-    id: event.id,
-    slug: event.slug,
-    status: event.status,
-    data: event,
-    updated_at: event.updatedAt,
-  }));
-
-  await client.from('be_events').insert(rows);
-}
-
 export async function fetchAllEvents(): Promise<Event[]> {
-  await seedDemoIfEmpty();
   const { data, error } = await assertSupabase()
     .from('be_events')
     .select('data')
@@ -59,9 +39,6 @@ export async function saveEvent(event: Event): Promise<void> {
 }
 
 export async function deleteEvent(eventId: string): Promise<void> {
-  if (DEMO_IDS.has(eventId)) {
-    throw new Error('Les événements démo intégrés ne peuvent pas être supprimés.');
-  }
   const { error } = await assertSupabase().from('be_events').delete().eq('id', eventId);
   if (error) throw new Error(error.message);
 }
