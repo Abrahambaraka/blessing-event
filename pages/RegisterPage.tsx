@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { useAuth } from '../src/contexts/AuthContext';
 import { parseReturnPath } from '../src/lib/rbac';
+import { emailConfirmationMessage, isEmailConfirmationRequiredError } from '../src/services/supabaseAuthService';
 
 interface RegisterPageProps {
   hash: string;
@@ -15,6 +16,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ hash, onNavigate }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const returnPath = parseReturnPath(hash) ?? 'dashboard';
@@ -34,12 +36,18 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ hash, onNavigate }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
     try {
       await register({ name, email, password, phone: phone || undefined });
       onNavigate(returnPath);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Inscription impossible.');
+      const message = err instanceof Error ? err.message : 'Inscription impossible.';
+      if (isEmailConfirmationRequiredError(message)) {
+        setSuccess(emailConfirmationMessage(message));
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -56,6 +64,10 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ hash, onNavigate }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="p-8 space-y-4">
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded text-sm">{success}</div>
+            )}
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">{error}</div>
             )}

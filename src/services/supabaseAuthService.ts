@@ -1,6 +1,26 @@
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { AuthError, User as SupabaseUser } from '@supabase/supabase-js';
 import type { LoginCredentials, RegisterPayload, User, UserRole } from '../types/auth';
 import { supabase } from '../lib/supabase';
+
+const CONFIRM_EMAIL_PREFIX = 'CONFIRM_EMAIL:';
+
+export function isEmailConfirmationRequiredError(message: string): boolean {
+  return message.startsWith(CONFIRM_EMAIL_PREFIX);
+}
+
+export function emailConfirmationMessage(message: string): string {
+  return message.slice(CONFIRM_EMAIL_PREFIX.length);
+}
+
+function mapAuthError(error: AuthError): string {
+  const code = error.code ?? '';
+  const msg = error.message.toLowerCase();
+
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) {
+    return 'Email non confirmé. Consultez votre boîte mail et cliquez sur le lien de confirmation.';
+  }
+  return 'Email ou mot de passe incorrect.';
+}
 
 function parseRole(value: unknown): UserRole {
   if (value === 'super_admin' || value === 'staff' || value === 'client') {
@@ -64,6 +84,12 @@ export async function supabaseRegister(payload: RegisterPayload): Promise<User> 
   if (error) throw new Error(error.message);
   if (!data.user) throw new Error('Inscription impossible.');
 
+  if (!data.session) {
+    throw new Error(
+      `${CONFIRM_EMAIL_PREFIX}Compte créé. Vérifiez votre boîte mail et cliquez sur le lien de confirmation, puis connectez-vous.`
+    );
+  }
+
   return mapSupabaseUser(data.user);
 }
 
@@ -75,7 +101,7 @@ export async function supabaseLogin(credentials: LoginCredentials): Promise<User
     password: credentials.password,
   });
 
-  if (error) throw new Error('Email ou mot de passe incorrect.');
+  if (error) throw new Error(mapAuthError(error));
   if (!data.user) throw new Error('Connexion impossible.');
 
   return mapSupabaseUser(data.user);
