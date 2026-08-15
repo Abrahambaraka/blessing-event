@@ -97,8 +97,14 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
 
         <div className="grid lg:grid-cols-5 gap-8 md:gap-12">
           <div className="lg:col-span-3">
-            <div className="rounded-xl overflow-hidden mb-6 shadow-lg bg-navy">
-              <img src={event.imageUrl} alt={event.title} className="w-full h-64 md:h-96 object-contain object-center" />
+            <div className="flex justify-center mb-6">
+              <div className="rounded-xl overflow-hidden shadow-lg bg-navy w-fit max-w-full">
+                <img
+                  src={event.imageUrl}
+                  alt={event.title}
+                  className="block max-w-full h-auto max-h-[min(90vh,720px)] w-auto"
+                />
+              </div>
             </div>
             <h1 className="font-serif text-2xl md:text-4xl text-navy mb-4">{event.title}</h1>
             <p className="text-slate-600 leading-relaxed mb-6">{event.description}</p>
