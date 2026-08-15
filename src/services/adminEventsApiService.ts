@@ -34,11 +34,8 @@ export async function adminFetchAllEvents(): Promise<Event[]> {
     const { events } = await adminApi<{ events: Event[] }>('GET');
     return events;
   } catch (err) {
-    if (import.meta.env.DEV) {
-      console.warn('[admin] API indisponible — fallback Supabase direct', err);
-      return sb.fetchAllEvents();
-    }
-    throw err;
+    console.warn('[admin] API indisponible — fallback Supabase direct', err);
+    return sb.fetchAllEvents();
   }
 }
 
@@ -47,11 +44,8 @@ export async function adminPersistEvent(event: Event): Promise<void> {
   try {
     await adminApi('POST', event);
   } catch (err) {
-    if (import.meta.env.DEV) {
-      await sb.saveEvent(event);
-      return;
-    }
-    throw err;
+    console.warn('[admin] API indisponible — fallback Supabase direct', err);
+    await sb.saveEvent(event);
   }
 }
 
@@ -60,10 +54,7 @@ export async function adminRemoveEvent(eventId: string): Promise<void> {
   try {
     await adminApi('DELETE', { eventId });
   } catch (err) {
-    if (import.meta.env.DEV) {
-      await sb.deleteEvent(eventId);
-      return;
-    }
-    throw err;
+    console.warn('[admin] API indisponible — fallback Supabase direct', err);
+    await sb.deleteEvent(eventId);
   }
 }
