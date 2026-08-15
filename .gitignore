@@ -27,3 +27,5 @@ dist-ssr
 .vercel/*
 !.vercel/project.json
 api/**/*.js
+api/**/*.cjs
+.tmp-*

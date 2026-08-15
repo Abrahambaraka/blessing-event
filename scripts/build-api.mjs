@@ -1,6 +1,6 @@
 /**
  * Bundle les routes /api pour Vercel (Node ESM exige des imports résolus).
- * Produit des fichiers .js CJS auto-contenus à partir des sources TypeScript.
+ * Produit des fichiers .cjs auto-contenus à partir des sources TypeScript.
  */
 import * as esbuild from 'esbuild';
 import { globSync } from 'glob';
@@ -23,7 +23,7 @@ if (entries.length === 0) {
 
 for (const entry of entries) {
   const infile = path.join(root, entry);
-  const outfile = path.join(root, entry.replace(/\.ts$/, '.js'));
+  const outfile = path.join(root, entry.replace(/\.ts$/, '.cjs'));
   rmSync(outfile, { force: true });
 
   await esbuild.build({
@@ -40,11 +40,12 @@ for (const entry of entries) {
 
 console.log(`[build-api] ${entries.length} fonction(s) API bundlée(s).`);
 
-/** Sur Vercel : ne garder que les .js pour éviter le conflit TS + ESM non résolu */
+/** Sur Vercel : ne garder que les .cjs (évite conflit avec les .ts ESM) */
 if (process.env.VERCEL) {
   for (const entry of entries) {
     rmSync(path.join(root, entry), { force: true });
   }
   rmSync(path.join(root, 'api/_lib'), { recursive: true, force: true });
+  rmSync(path.join(root, 'api/package.json'), { force: true });
   console.log('[build-api] Sources TS retirées du déploiement Vercel.');
 }
