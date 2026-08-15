@@ -145,14 +145,19 @@ export async function getTicketsByEmail(email: string): Promise<Ticket[]> {
   });
 
   if (error) {
-    // Fallback si la migration 009 n'est pas encore exécutée
-    if (/be_tickets_by_email|42883|PGRST202/i.test(error.message)) {
+    // Fallback si RPC absente ou version SQL buguée (DISTINCT + ORDER BY)
+    if (
+      /be_tickets_by_email|42883|PGRST202|42P10|SELECT DISTINCT|ORDER BY expressions/i.test(error.message)
+    ) {
       return getTicketsByEmailFallback(normalized);
     }
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row: Ticket) => row);
+  const tickets = (data ?? []).map((row: Ticket) => row);
+  return tickets.sort(
+    (a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime()
+  );
 }
 
 async function getTicketsByEmailFallback(email: string): Promise<Ticket[]> {
@@ -182,7 +187,9 @@ async function getTicketsByEmailFallback(email: string): Promise<Ticket[]> {
     const ticket = row.data as Ticket;
     byId.set(ticket.id, ticket);
   }
-  return [...byId.values()];
+  return [...byId.values()].sort(
+    (a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime()
+  );
 }
 
 export async function getTicketByCode(code: string): Promise<Ticket | null> {
