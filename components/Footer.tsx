@@ -25,8 +25,6 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <h4 className="text-navy font-bold uppercase tracking-wide md:tracking-widest text-xs md:text-sm mb-4 md:mb-6">Navigation</h4>
             <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-slate-500">
               <li><a href="#home" className="hover:text-gold transition-colors">Accueil</a></li>
-              <li><a href="#events" className="hover:text-gold transition-colors">Billetterie</a></li>
-              <li><a href="#my-tickets" className="hover:text-gold transition-colors">Mes billets</a></li>
               <li><a href="#about" className="hover:text-gold transition-colors">À Propos</a></li>
               <li><a href="#services" className="hover:text-gold transition-colors">Nos Services</a></li>
               <li><a href="#contact" className="hover:text-gold transition-colors">Contact</a></li>

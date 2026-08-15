@@ -136,6 +136,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           <div className="border-t border-white/10 pt-4 space-y-3">
             {user ? (
               <>
+                <a href="#events" className="block text-sm text-white uppercase" onClick={() => setIsMobileMenuOpen(false)}>
+                  Billetterie
+                </a>
+                <a href="#my-tickets" className="block text-sm text-white uppercase" onClick={() => setIsMobileMenuOpen(false)}>
+                  Mes billets
+                </a>
                 <a href={user.role === 'super_admin' ? '#admin' : '#dashboard'} className="block text-sm text-gold uppercase" onClick={() => setIsMobileMenuOpen(false)}>
                   {user.role === 'super_admin' ? 'Administration' : 'Mon espace'}
                 </a>
