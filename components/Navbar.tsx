@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, LogIn, LogOut, LayoutDashboard, Shield } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Shield } from 'lucide-react';
 import { useAuth } from '../src/contexts/AuthContext';
 import { buildLoginRedirect } from '../src/lib/rbac';
 
@@ -97,14 +97,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
                 </button>
               </>
             ) : (
-              <>
-                <a href="#login" className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-white hover:text-gold transition-custom">
-                  <LogIn size={14} /> Connexion
-                </a>
-                <a href="#register" className="px-3 py-1.5 bg-gold text-white text-[10px] font-bold tracking-widest uppercase hover:bg-white hover:text-navy transition-custom">
-                  S'inscrire
-                </a>
-              </>
+              <a href="#login" className="px-3 py-1.5 bg-gold text-white text-[10px] font-bold tracking-widest uppercase hover:bg-white hover:text-navy transition-custom">
+                Connexion Google
+              </a>
             )}
           </div>
         </div>
@@ -148,10 +143,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
                 </button>
               </>
             ) : (
-              <>
-                <a href="#login" className="block text-sm text-white uppercase" onClick={() => setIsMobileMenuOpen(false)}>Connexion</a>
-                <a href="#register" className="block text-sm text-gold uppercase" onClick={() => setIsMobileMenuOpen(false)}>S'inscrire</a>
-              </>
+              <a href="#login" className="block text-sm text-gold uppercase" onClick={() => setIsMobileMenuOpen(false)}>
+                Connexion Google
+              </a>
             )}
           </div>
         </div>

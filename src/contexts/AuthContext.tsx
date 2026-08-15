@@ -7,6 +7,7 @@ interface AuthContextValue {
   isLoading: boolean;
   authMode: 'supabase' | 'local';
   login: (credentials: LoginCredentials) => Promise<User>;
+  loginWithGoogle: (returnPath?: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -44,6 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return loggedIn;
   }, []);
 
+  const loginWithGoogle = useCallback(async (returnPath?: string) => {
+    await authService.loginWithGoogle(returnPath);
+  }, []);
+
   const register = useCallback(async (payload: RegisterPayload) => {
     const created = await authService.register(payload);
     setUser(created);
@@ -61,12 +66,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading,
       authMode: authService.authMode(),
       login,
+      loginWithGoogle,
       register,
       logout,
       refresh,
       getAccessToken: authService.getAccessToken,
     }),
-    [user, isLoading, login, register, logout, refresh]
+    [user, isLoading, login, loginWithGoogle, register, logout, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

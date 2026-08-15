@@ -1,4 +1,5 @@
 import { isSupabaseEnabled } from '../lib/supabase';
+import { saveAuthReturn } from '../lib/authRedirect';
 import type { LoginCredentials, RegisterPayload, User } from '../types/auth';
 import {
   clearSession,
@@ -114,6 +115,14 @@ export async function initAuth(): Promise<User | null> {
   if (isSupabaseEnabled) return supabaseAuth.supabaseInitAuth();
   await localInitAuth();
   return localGetCurrentUser();
+}
+
+export async function loginWithGoogle(returnPath?: string): Promise<void> {
+  if (!isSupabaseEnabled) {
+    throw new Error('Connexion Google disponible uniquement avec Supabase configuré.');
+  }
+  if (returnPath) saveAuthReturn(returnPath);
+  await supabaseAuth.signInWithGoogle();
 }
 
 export async function register(payload: RegisterPayload): Promise<User> {
