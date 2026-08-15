@@ -52,14 +52,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${isDarkBg ? 'bg-navy py-3 md:py-4 shadow-lg' : 'bg-transparent py-4 md:py-6'}`}>
       <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
-        <a href="#home" className="flex items-center space-x-2 md:space-x-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 relative flex-shrink-0">
-             <img src="/logo.png" alt="Blessing Event Logo" className="w-full h-full object-contain" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-white font-bold text-base md:text-lg tracking-wide md:tracking-widest leading-none">BLESSING</span>
-            <span className="text-gold text-[8px] md:text-[9px] tracking-[0.2em] md:tracking-[0.3em] font-medium leading-none uppercase">Event</span>
-          </div>
+        <a href="#home" className="flex items-center">
+          <img
+            src="/logo.png"
+            alt="Blessing Event"
+            className="h-10 md:h-12 w-auto max-w-[160px] md:max-w-[180px] object-contain"
+          />
         </a>
 
         <div className="hidden md:flex items-center space-x-6">

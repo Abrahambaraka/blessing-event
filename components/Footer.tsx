@@ -12,10 +12,11 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-8 md:mb-12">
           <div className="col-span-2">
-            <div className="flex flex-col mb-4 md:mb-6">
-              <span className="text-navy font-bold text-xl md:text-2xl tracking-wide md:tracking-widest leading-none">BLESSING</span>
-              <span className="text-gold text-xs tracking-[0.3em] md:tracking-[0.4em] font-medium leading-none mt-1">E V E N T</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Blessing Event"
+              className="h-14 md:h-16 w-auto max-w-[200px] object-contain mb-4 md:mb-6"
+            />
             <p className="text-slate-500 max-w-sm leading-relaxed text-xs md:text-sm">
               L'excellence du protocole et l'art de recevoir. Nous transformons vos visions en réalités mémorables à Lubumbashi et au-delà.
             </p>
