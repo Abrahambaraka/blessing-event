@@ -1,4 +1,5 @@
 import type { Event } from '../types/ticketing';
+import { parseJsonResponse } from '../lib/compressImage';
 import { getAccessToken } from './authService';
 import { isSupabaseEnabled } from '../lib/supabase';
 import * as sb from './supabaseTicketingService';
@@ -16,7 +17,7 @@ async function adminApi<T>(method: string, body?: unknown): Promise<T> {
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse<{ error?: string } & T>(response);
   if (!response.ok) {
     throw new Error(data.error ?? `Erreur API admin (${response.status})`);
   }

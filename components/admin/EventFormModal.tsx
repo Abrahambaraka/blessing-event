@@ -255,7 +255,7 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
                     </button>
                   )}
                   <p className="text-xs text-slate-400">
-                    JPG, PNG, WebP ou GIF — max. 4 Mo
+                    JPG, PNG, WebP ou GIF — max. 5 Mo (compressé automatiquement)
                   </p>
                   {uploadingImage && <p className="text-xs text-gold font-medium">Envoi de l'image en cours…</p>}
                 </div>

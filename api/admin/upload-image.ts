@@ -8,7 +8,15 @@ import {
   getEventImagePublicUrl,
 } from '../_lib/eventImagesStorage';
 
-const MAX_BYTES = 4 * 1024 * 1024;
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '2mb',
+    },
+  },
+};
+
+const MAX_BYTES = 1.5 * 1024 * 1024;
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 /**
@@ -16,29 +24,30 @@ const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
  * Body JSON : { fileName, contentType, dataBase64 }
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return json(res, 405, { error: 'Method not allowed' });
-  }
-
-  const auth = await verifyBearerToken(req);
-  if (!requireRole(auth, ['super_admin'])) {
-    return json(res, 403, { error: 'Accès admin requis.' });
-  }
-
-  const { fileName, contentType, dataBase64 } = req.body ?? {};
-
-  if (!fileName || !contentType || !dataBase64) {
-    return json(res, 400, { error: 'fileName, contentType et dataBase64 requis.' });
-  }
-
-  if (!ALLOWED.has(contentType)) {
-    return json(res, 400, { error: 'Format non supporté (JPG, PNG, WebP, GIF).' });
-  }
-
   try {
+    if (req.method !== 'POST') {
+      return json(res, 405, { error: 'Method not allowed' });
+    }
+
+    const auth = await verifyBearerToken(req);
+    if (!requireRole(auth, ['super_admin'])) {
+      return json(res, 403, { error: 'Accès admin requis.' });
+    }
+
+    const body = req.body ?? {};
+    const { fileName, contentType, dataBase64 } = body;
+
+    if (!fileName || !contentType || !dataBase64) {
+      return json(res, 400, { error: 'fileName, contentType et dataBase64 requis.' });
+    }
+
+    if (!ALLOWED.has(String(contentType))) {
+      return json(res, 400, { error: 'Format non supporté (JPG, PNG, WebP, GIF).' });
+    }
+
     const buffer = Buffer.from(String(dataBase64), 'base64');
     if (buffer.byteLength > MAX_BYTES) {
-      return json(res, 400, { error: 'Image trop volumineuse (maximum 4 Mo).' });
+      return json(res, 400, { error: 'Image trop volumineuse après compression (max ~1,5 Mo).' });
     }
 
     const admin = assertSupabaseAdmin();

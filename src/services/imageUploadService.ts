@@ -1,7 +1,8 @@
 import { isSupabaseEnabled } from '../lib/supabase';
+import { compressImageForUpload, parseJsonResponse } from '../lib/compressImage';
 import { getAccessToken } from './authService';
 
-const MAX_SIZE = 4 * 1024 * 1024;
+const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 export function canUploadEventImages(): boolean {
@@ -13,8 +14,7 @@ function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      const base64 = result.split(',')[1] ?? '';
-      resolve(base64);
+      resolve(result.split(',')[1] ?? '');
     };
     reader.onerror = () => reject(new Error('Lecture du fichier impossible.'));
     reader.readAsDataURL(file);
@@ -29,8 +29,9 @@ async function ensureBucket(token: string): Promise<void> {
       'Content-Type': 'application/json',
     },
   });
+
+  const data = await parseJsonResponse<{ error?: string }>(response);
   if (!response.ok) {
-    const data = await response.json();
     throw new Error(data.error ?? 'Impossible de préparer le stockage images.');
   }
 }
@@ -45,7 +46,7 @@ export async function uploadEventImage(file: File): Promise<string> {
   }
 
   if (file.size > MAX_SIZE) {
-    throw new Error('Image trop volumineuse (maximum 4 Mo).');
+    throw new Error('Image trop volumineuse (maximum 5 Mo).');
   }
 
   const token = await getAccessToken();
@@ -53,7 +54,9 @@ export async function uploadEventImage(file: File): Promise<string> {
 
   await ensureBucket(token);
 
-  const dataBase64 = await fileToBase64(file);
+  const compressed = await compressImageForUpload(file);
+  const dataBase64 = await fileToBase64(compressed);
+
   const response = await fetch('/api/admin/upload-image', {
     method: 'POST',
     headers: {
@@ -61,16 +64,20 @@ export async function uploadEventImage(file: File): Promise<string> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      fileName: file.name,
-      contentType: file.type,
+      fileName: compressed.name,
+      contentType: compressed.type,
       dataBase64,
     }),
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse<{ error?: string; publicUrl?: string }>(response);
   if (!response.ok) {
     throw new Error(data.error ?? `Upload échoué (${response.status}).`);
   }
 
-  return data.publicUrl as string;
+  if (!data.publicUrl) {
+    throw new Error('URL publique manquante après upload.');
+  }
+
+  return data.publicUrl;
 }
