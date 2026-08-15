@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ShieldAlert } from 'lucide-react';
-import type { AppRoutePage } from '../types/auth';
+import type { AppRoutePage } from '../../types/auth';
 import { canAccessRoute, buildLoginRedirect } from '../../lib/rbac';
 import { useAuth } from '../../contexts/AuthContext';
 
