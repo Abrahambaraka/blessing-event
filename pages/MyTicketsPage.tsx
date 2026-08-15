@@ -3,7 +3,6 @@ import { Search, Ticket } from 'lucide-react';
 import TicketDisplay from '../components/ticketing/TicketDisplay';
 import { useAuth } from '../src/contexts/AuthContext';
 import { fetchMyTickets, fetchTicketsByEmail } from '../src/services/ticketingService';
-import { shouldUseTicketingApi } from '../src/services/ticketingApiService';
 import type { Ticket as TicketType } from '../src/types/ticketing';
 
 const MyTicketsPage: React.FC = () => {
@@ -40,10 +39,7 @@ const MyTicketsPage: React.FC = () => {
     localStorage.setItem('be_buyer_email', email.trim());
 
     try {
-      const results =
-        user && shouldUseTicketingApi()
-          ? await fetchMyTickets(email.trim())
-          : await fetchTicketsByEmail(email.trim());
+      const results = await fetchTicketsByEmail(email.trim());
       setTickets(results);
       setSearched(true);
     } catch (err) {

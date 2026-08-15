@@ -25,11 +25,8 @@ async function withApiFallback<T>(apiFn: () => Promise<T>, fallbackFn: () => Pro
   try {
     return await apiFn();
   } catch (err) {
-    if (import.meta.env.DEV) {
-      console.warn('[ticketing] API indisponible — fallback Supabase direct', err);
-      return fallbackFn();
-    }
-    throw err;
+    console.warn('[ticketing] API indisponible — fallback Supabase direct', err);
+    return fallbackFn();
   }
 }
 
@@ -321,20 +318,10 @@ export async function fetchTicketsByEmail(email: string): Promise<Ticket[]> {
   return storage.getTicketsByEmail(email);
 }
 
-/** Billets du compte connecté (JWT) — préféré en mode Supabase */
+/** Billets du compte connecté — Supabase direct (JWT + RLS) */
 export async function fetchMyTickets(fallbackEmail?: string): Promise<Ticket[]> {
-  if (shouldUseTicketingApi()) {
-    try {
-      return await apiFetchMyTickets();
-    } catch (err) {
-      if (import.meta.env.DEV && fallbackEmail) {
-        return sb.getTicketsByEmail(fallbackEmail);
-      }
-      throw err;
-    }
-  }
-  if (fallbackEmail) return fetchTicketsByEmail(fallbackEmail);
-  return [];
+  if (!fallbackEmail?.trim()) return [];
+  return fetchTicketsByEmail(fallbackEmail.trim());
 }
 
 export async function fetchOrder(orderId: string): Promise<Order | null> {
