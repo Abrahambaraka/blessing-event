@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, CreditCard, CheckCircle, Mail } from 'lucide-react';
 import TicketDisplay from '../components/ticketing/TicketDisplay';
+import { useAuth } from '../src/contexts/AuthContext';
 import { fetchEvent, createOrder, completePayment } from '../src/services/ticketingService';
 import { initiatePayment } from '../src/services/paymentService';
 import { formatPrice } from '../src/lib/fees';
@@ -12,10 +13,11 @@ interface CheckoutPageProps {
 }
 
 const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) => {
+  const { user } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [buyerName, setBuyerName] = useState('');
-  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerName, setBuyerName] = useState(() => user?.name ?? '');
+  const [buyerEmail, setBuyerEmail] = useState(() => user?.email ?? '');
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [order, setOrder] = useState<Order | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -51,6 +53,12 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
     });
   }, [eventSlug, onNavigate]);
 
+  useEffect(() => {
+    if (!user) return;
+    setBuyerName((prev) => prev || user.name);
+    setBuyerEmail((prev) => prev || user.email);
+  }, [user]);
+
   const updateAttendee = (index: number, field: keyof Attendee, value: string) => {
     setAttendees((prev) => {
       const next = [...prev];
@@ -78,18 +86,20 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ eventSlug, onNavigate }) =>
     if (!event || !validateForm()) return;
     setLoading(true);
 
-    const attendeesWithBuyer = attendees.map((a, i) =>
-      i === 0 && !a.email ? { ...a, email: buyerEmail } : a
-    );
+    const attendeesWithBuyer = attendees.map((a, i) => {
+      const email = (i === 0 && !a.email.trim() ? buyerEmail : a.email).trim().toLowerCase();
+      return { ...a, email };
+    });
 
     try {
       const newOrder = await createOrder(
         event,
         cart,
-        { name: buyerName, email: buyerEmail },
+        { name: buyerName.trim(), email: buyerEmail.trim().toLowerCase() },
         attendeesWithBuyer
       );
       setOrder(newOrder);
+      localStorage.setItem('be_buyer_email', buyerEmail.trim().toLowerCase());
 
       if (newOrder.status === 'paid') {
         const { tickets: issued } = await completePayment(newOrder.id);

@@ -116,12 +116,51 @@ export async function getAllTickets(): Promise<Ticket[]> {
 
 export async function getTicketsByEmail(email: string): Promise<Ticket[]> {
   const normalized = email.trim().toLowerCase();
-  const { data, error } = await assertSupabase()
+  if (!normalized) return [];
+
+  const { data, error } = await assertSupabase().rpc('be_tickets_by_email', {
+    p_email: normalized,
+  });
+
+  if (error) {
+    // Fallback si la migration 009 n'est pas encore exécutée
+    if (/be_tickets_by_email|42883|PGRST202/i.test(error.message)) {
+      return getTicketsByEmailFallback(normalized);
+    }
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row: Ticket) => row);
+}
+
+async function getTicketsByEmailFallback(email: string): Promise<Ticket[]> {
+  const client = assertSupabase();
+  const { data: holderRows, error: holderError } = await client
     .from('be_tickets')
     .select('data')
-    .ilike('holder_email', normalized);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => r.data as Ticket);
+    .ilike('holder_email', email);
+  if (holderError) throw new Error(holderError.message);
+
+  const { data: orderRows, error: orderError } = await client
+    .from('be_orders')
+    .select('id')
+    .ilike('buyer_email', email);
+  if (orderError) throw new Error(orderError.message);
+
+  const orderIds = (orderRows ?? []).map((o) => o.id);
+  let buyerRows: { data: Ticket }[] = [];
+  if (orderIds.length > 0) {
+    const { data, error } = await client.from('be_tickets').select('data').in('order_id', orderIds);
+    if (error) throw new Error(error.message);
+    buyerRows = (data ?? []) as { data: Ticket }[];
+  }
+
+  const byId = new Map<string, Ticket>();
+  for (const row of [...(holderRows ?? []), ...buyerRows]) {
+    const ticket = row.data as Ticket;
+    byId.set(ticket.id, ticket);
+  }
+  return [...byId.values()];
 }
 
 export async function getTicketByCode(code: string): Promise<Ticket | null> {

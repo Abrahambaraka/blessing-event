@@ -24,6 +24,7 @@ const MyTicketsPage: React.FC = () => {
       .then((results) => {
         setTickets(results);
         setSearched(true);
+        localStorage.setItem('be_buyer_email', user.email.trim().toLowerCase());
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Impossible de charger vos billets.');
@@ -95,7 +96,35 @@ const MyTicketsPage: React.FC = () => {
         )}
 
         {searched && tickets.length === 0 && !loading && (
-          <p className="text-center text-slate-500">Aucun billet trouvé pour cet email.</p>
+          <div className="text-center text-slate-500 space-y-2">
+            <p>Aucun billet trouvé pour {user ? 'votre compte' : 'cet email'}.</p>
+            <p className="text-sm text-slate-400">
+              Les billets sont liés à l&apos;email utilisé lors de l&apos;achat (acheteur ou participant).
+              {user && ' Si vous avez acheté avec une autre adresse, utilisez la recherche ci-dessous.'}
+            </p>
+          </div>
+        )}
+
+        {user && searched && tickets.length === 0 && !loading && (
+          <form onSubmit={handleSearch} className="flex gap-2 mb-10 mt-6">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Autre email utilisé à l'achat"
+                className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:border-gold focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !email.trim()}
+              className="px-6 py-3 bg-navy text-white text-sm font-bold uppercase tracking-widest rounded-lg hover:bg-navy/90 disabled:opacity-50"
+            >
+              {loading ? '...' : 'Chercher'}
+            </button>
+          </form>
         )}
 
         <div className="space-y-4">
