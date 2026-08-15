@@ -61,9 +61,31 @@ export async function saveEvent(event: Event): Promise<void> {
   if (error) {
     const msg = error.message;
     if (/permission|policy|RLS|42501/i.test(msg)) {
-      throw new Error('Accès refusé — votre compte doit être super_admin (table profiles). Reconnectez-vous après la promotion SQL.');
+      throw new Error('Accès refusé — seuls les administrateurs peuvent modifier les événements.');
     }
     throw new Error(msg);
+  }
+}
+
+/** Mise à jour des places vendues après achat (RPC — pas besoin d'être admin) */
+export async function incrementEventSoldCounts(
+  eventId: string,
+  items: { ticketTypeId: string; quantity: number }[]
+): Promise<void> {
+  if (items.length === 0) return;
+
+  const { error } = await assertSupabase().rpc('be_increment_sold_counts', {
+    p_event_id: eventId,
+    p_items: items,
+  });
+
+  if (error) {
+    if (/be_increment_sold_counts|42883|PGRST202/i.test(error.message)) {
+      throw new Error(
+        'Configuration billetterie incomplète — exécutez la migration 010_checkout_increment_sold.sql dans Supabase SQL Editor.'
+      );
+    }
+    throw new Error(error.message);
   }
 }
 

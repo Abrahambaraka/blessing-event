@@ -283,7 +283,11 @@ async function finalizeOrder(order: Order, event: Event, attendees: Attendee[]):
   }));
 
   const updatedEvent = updateEventSoldCounts(event, cartItems);
-  await persistEvent(updatedEvent);
+  if (isSupabaseEnabled) {
+    await sb.incrementEventSoldCounts(event.id, cartItems);
+  } else {
+    await persistEvent(updatedEvent);
+  }
 
   const tickets: Ticket[] = [];
   let attendeeIdx = 0;
