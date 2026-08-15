@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { v4 as randomUUID } from 'uuid';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const EVENT_IMAGES_BUCKET = 'event-images';
@@ -27,7 +27,7 @@ export async function ensureEventImagesBucket(admin: SupabaseClient): Promise<bo
 
 export function buildEventImagePath(fileName: string): string {
   const ext = fileName.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-  return `events/${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
+  return `events/${Date.now()}-${randomUUID().replace(/-/g, '').slice(0, 8)}.${ext}`;
 }
 
 export function getEventImagePublicUrl(admin: SupabaseClient, path: string): string {
