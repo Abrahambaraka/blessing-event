@@ -5,6 +5,20 @@
   --color-gold: #C5A059;
 }
 
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  min-width: 320px;
+}
+
+#root {
+  overflow-x: hidden;
+}
+
 /* --- SCROLL REVEAL --- */
 .reveal-fade-up {
   opacity: 0;

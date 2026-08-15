@@ -17,6 +17,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ClientDashboardPage from './pages/ClientDashboardPage';
 import ProtectedRoute from './src/components/auth/ProtectedRoute';
+import PwaInstallBanner from './src/components/PwaInstallBanner';
+import { useNativeAppInit } from './src/lib/nativeApp';
 import { useScrollReveal } from './src/hooks/useScrollReveal';
 import { initProductionDataMode } from './src/lib/dataMode';
 import type { AppRoutePage } from './src/types/auth';
@@ -65,6 +67,8 @@ const AUTH_LAYOUT_PAGES = new Set(['login', 'register']);
 const App: React.FC = () => {
   const [route, setRoute] = useState<Route>({ page: 'home' });
   const [hash, setHash] = useState(window.location.hash);
+
+  useNativeAppInit();
 
   const navigate = useCallback((path: string) => {
     window.location.hash = path.startsWith('#') ? path : `#${path.replace(/^\//, '')}`;
@@ -127,12 +131,13 @@ const App: React.FC = () => {
   const hideChrome = AUTH_LAYOUT_PAGES.has(route.page);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col overflow-x-hidden">
       <Navbar currentPage={routeToPageId(route)} onNavigate={navigate} />
-      <main className="flex-grow pt-0">
+      <main className="flex-grow pt-0 min-w-0">
         {renderPage()}
       </main>
       {!hideChrome && <Footer onNavigate={navigate} />}
+      <PwaInstallBanner />
     </div>
   );
 };

@@ -15,7 +15,7 @@ const Hero: React.FC = () => {
   };
 
   return (
-    <section id="accueil" className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-navy">
+    <section id="accueil" className="relative flex items-center justify-center overflow-hidden bg-navy min-h-[100dvh] max-h-[900px] sm:min-h-[600px] sm:h-screen">
       {/* Background with overlay */}
       <div className="absolute inset-0 z-0">
         <video
@@ -32,7 +32,7 @@ const Hero: React.FC = () => {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 md:px-6 text-center text-white">
-        <h1 className="reveal-fade-up text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-3 md:mb-4 tracking-tight" data-delay="0ms">
+        <h1 className="reveal-fade-up text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-3 md:mb-4 tracking-tight px-2" data-delay="0ms">
           BLESSING EVENT
         </h1>
         <p className="reveal-fade-up text-gold text-sm sm:text-base md:text-lg lg:text-2xl font-serif italic mb-8 md:mb-12 max-w-2xl mx-auto tracking-wide md:tracking-widest px-4" data-delay="150ms">

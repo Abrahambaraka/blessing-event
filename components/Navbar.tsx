@@ -119,7 +119,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
         </button>
       </div>
 
-      <div className={`md:hidden absolute top-full left-0 w-full bg-navy border-t border-slate-700 transition-all duration-300 ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+      <div className={`md:hidden absolute top-full left-0 w-full bg-navy border-t border-slate-700 transition-all duration-300 max-h-[calc(100dvh-4.5rem)] overflow-y-auto ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
         <div className="flex flex-col p-6 space-y-4">
           {navLinks.map((link) => (
             <a

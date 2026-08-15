@@ -161,8 +161,8 @@ const EventFormModal: React.FC<EventFormModalProps> = ({ event, onClose, onSave 
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-navy/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-8">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-navy/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-4 sm:my-8">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="font-serif text-xl text-navy">{isEdit ? 'Modifier l\'événement' : 'Nouvel événement'}</h2>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-navy">

@@ -103,33 +103,34 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
             <h1 className="font-serif text-2xl md:text-4xl text-navy mb-4">{event.title}</h1>
             <p className="text-slate-600 leading-relaxed mb-6">{event.description}</p>
 
-            <div className="grid sm:grid-cols-3 gap-4 mb-8">
-              <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-100">
-                <Calendar size={20} className="text-gold" />
-                <div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
+              <div className="flex items-start gap-3 p-3 sm:p-4 bg-white rounded-lg border border-slate-100 min-w-0">
+                <Calendar size={20} className="text-gold shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-widest text-slate-400">Date</p>
-                  <p className="text-sm font-medium text-navy">
+                  <p className="text-sm font-medium text-navy break-words">
                     {new Date(event.date).toLocaleDateString('fr-FR', {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
                     })}
-                    {' — '}
+                  </p>
+                  <p className="text-sm font-medium text-navy mt-0.5">
                     {new Date(event.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-100">
-                <MapPin size={20} className="text-gold" />
-                <div>
+              <div className="flex items-start gap-3 p-3 sm:p-4 bg-white rounded-lg border border-slate-100 min-w-0">
+                <MapPin size={20} className="text-gold shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-widest text-slate-400">Lieu</p>
-                  <p className="text-sm font-medium text-navy">{event.venue}, {event.city}</p>
+                  <p className="text-sm font-medium text-navy break-words">{event.venue}, {event.city}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-slate-100">
-                <Users size={20} className="text-gold" />
-                <div>
+              <div className="flex items-start gap-3 p-3 sm:p-4 bg-white rounded-lg border border-slate-100 min-w-0">
+                <Users size={20} className="text-gold shrink-0 mt-0.5" />
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-widest text-slate-400">Places</p>
                   <p className="text-sm font-medium text-navy">{totalSold} / {event.capacity}</p>
                 </div>
@@ -174,7 +175,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ eventSlug, onNavigate
           </div>
 
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 md:p-6 sticky top-28">
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5 md:p-6 lg:sticky lg:top-28">
               <h2 className="font-serif text-xl text-navy mb-4">Choisissez vos billets</h2>
               {cartError && (
                 <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">{cartError}</p>
