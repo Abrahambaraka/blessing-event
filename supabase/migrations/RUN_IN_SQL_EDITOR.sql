@@ -165,10 +165,12 @@ declare normalized text := lower(trim(p_email));
 begin
   if normalized = '' or normalized !~ '^[^@]+@[^@]+\.[^@]+$' then return array[]::jsonb[]; end if;
   return array(
-    select distinct t.data from public.be_tickets t
-    left join public.be_orders o on o.id = t.order_id
-    where lower(t.holder_email) = normalized or lower(o.buyer_email) = normalized
-    order by t.data ->> 'issuedAt' desc nulls last
+    select x.data from (
+      select distinct on (t.id) t.data, t.data ->> 'issuedAt' as issued_at
+      from public.be_tickets t left join public.be_orders o on o.id = t.order_id
+      where lower(t.holder_email) = normalized or lower(o.buyer_email) = normalized
+      order by t.id, t.data ->> 'issuedAt' desc nulls last
+    ) x order by x.issued_at desc nulls last
   );
 end;
 $$;
