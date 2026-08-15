@@ -13,9 +13,9 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-8 md:mb-12">
           <div className="col-span-2">
             <img
-              src="/logo.png"
+              src="/logo.png?v=4"
               alt="Blessing Event"
-              className="h-14 md:h-16 w-auto max-w-[200px] object-contain mb-4 md:mb-6"
+              className="h-14 md:h-16 w-auto max-w-[200px] object-contain bg-transparent mb-4 md:mb-6"
             />
             <p className="text-slate-500 max-w-sm leading-relaxed text-xs md:text-sm">
               L'excellence du protocole et l'art de recevoir. Nous transformons vos visions en réalités mémorables à Lubumbashi et au-delà.
