@@ -74,6 +74,7 @@ const AdminPage: React.FC = () => {
             <p className="text-sm text-slate-500">
               {user?.name} · Base de données : {dataMode() === 'supabase' ? 'Supabase (live)' : 'Local — configurez VITE_SUPABASE_*'}
             </p>
+            <p className="text-[10px] text-slate-400 mt-1">Build {import.meta.env.VITE_BUILD_ID ?? '?'}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button

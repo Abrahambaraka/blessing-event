@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/build-api.mjs",
+    "build": "vite build",
+    "build:api": "node scripts/build-api.mjs",
     "preview": "vite preview",
     "deploy": "npm run build && vercel deploy --prod --yes",
     "db:migrate": "node scripts/db-migrate.mjs",

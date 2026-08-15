@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const buildId = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? `dev-${Date.now().toString(36)}`;
     return {
       server: {
         port: 3000,
@@ -12,7 +13,8 @@ export default defineConfig(({ mode }) => {
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'import.meta.env.VITE_BUILD_ID': JSON.stringify(buildId),
       },
       resolve: {
         alias: {

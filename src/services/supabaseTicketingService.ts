@@ -58,7 +58,13 @@ export async function saveEvent(event: Event): Promise<void> {
     data: event,
     updated_at: event.updatedAt,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    const msg = error.message;
+    if (/permission|policy|RLS|42501/i.test(msg)) {
+      throw new Error('Accès refusé — votre compte doit être super_admin (table profiles). Reconnectez-vous après la promotion SQL.');
+    }
+    throw new Error(msg);
+  }
 }
 
 export async function deleteEvent(eventId: string): Promise<void> {
